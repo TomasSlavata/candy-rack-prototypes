@@ -1,0 +1,38 @@
+/* Storefront design tokens – use these variables instead of hard-coded values.
+   Placeholder values for now; replace with Candy Rack's real storefront styles. */
+:root {
+  --sf-font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --sf-color-bg: #ffffff;
+  --sf-color-bg-muted: #f4f4f4;
+  --sf-color-text: #1a1a1a;
+  --sf-color-text-muted: #6b6b6b;
+  --sf-color-border: #e3e3e3;
+  --sf-color-primary: #1a1a1a;
+  --sf-color-on-primary: #ffffff;
+  --sf-color-overlay: rgba(0, 0, 0, 0.4);
+  --sf-radius: 8px;
+  --sf-space-1: 4px;
+  --sf-space-2: 8px;
+  --sf-space-3: 12px;
+  --sf-space-4: 16px;
+  --sf-space-6: 24px;
+  --sf-slide-cart-width: 400px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: var(--sf-font);
+  color: var(--sf-color-text);
+  background: var(--sf-color-bg);
+}
+
+button {
+  font: inherit;
+  cursor: pointer;
+}

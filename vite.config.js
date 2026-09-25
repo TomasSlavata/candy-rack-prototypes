@@ -3,30 +3,53 @@ import { resolve } from 'node:path';
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
-// Every top-level folder with an index.html is a prototype.
-// Add a new prototype = create a new folder, nothing to register here.
-const IGNORED = new Set(['shared', 'node_modules', 'dist', 'public']);
+const root = import.meta.dirname;
 
-const prototypes = readdirSync(import.meta.dirname, { withFileTypes: true })
-  .filter((entry) => entry.isDirectory() && !entry.name.startsWith('.'))
-  .map((entry) => entry.name)
+// Structure: <feature>/<part>/index.html, e.g. reward-bar/admin-slide-cart/index.html
+// Add a feature or part = create a folder, nothing to register here.
+// Folders starting with "_" (like _template) are local-only: visible in `npm run dev`, never published.
+const IGNORED = new Set(['shared', 'node_modules', 'dist', 'public']);
+const PART_ORDER = ['admin-', 'theme-editor', 'storefront-'];
+
+const subfolders = (dir) =>
+  readdirSync(dir, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory() && !entry.name.startsWith('.'))
+    .map((entry) => entry.name);
+
+const partRank = (part) => {
+  const rank = PART_ORDER.findIndex((prefix) => part.startsWith(prefix));
+  return rank === -1 ? PART_ORDER.length : rank;
+};
+
+const features = subfolders(root)
   .filter((name) => !IGNORED.has(name))
-  .filter((name) => existsSync(resolve(import.meta.dirname, name, 'index.html')))
-  .sort();
+  .map((slug) => ({
+    slug,
+    localOnly: slug.startsWith('_'),
+    parts: subfolders(resolve(root, slug))
+      .filter((part) => existsSync(resolve(root, slug, part, 'index.html')))
+      .sort((a, b) => partRank(a) - partRank(b) || a.localeCompare(b)),
+  }))
+  .filter((feature) => feature.parts.length > 0)
+  .sort((a, b) => a.slug.localeCompare(b.slug));
+
+const published = features.filter((feature) => !feature.localOnly);
 
 export default defineConfig({
   plugins: [react()],
   // Relative paths, so the build works on GitHub Pages under /candy-rack-prototypes/
   base: './',
   define: {
-    __PROTOTYPES__: JSON.stringify(prototypes),
+    __FEATURES__: JSON.stringify(features),
   },
   build: {
     rollupOptions: {
       input: {
-        index: resolve(import.meta.dirname, 'index.html'),
+        index: resolve(root, 'index.html'),
         ...Object.fromEntries(
-          prototypes.map((name) => [name, resolve(import.meta.dirname, name, 'index.html')]),
+          published.flatMap(({ slug, parts }) =>
+            parts.map((part) => [`${slug}__${part}`, resolve(root, slug, part, 'index.html')]),
+          ),
         ),
       },
     },
