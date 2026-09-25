@@ -19,6 +19,8 @@ import { MenuIcon } from '@shopify/polaris-icons';
 import { renderAdmin } from '../../shared/admin/AdminShell.jsx';
 import { useMediaQuery } from '../../shared/custom/useMediaQuery.js';
 import appIcon from '../../shared/admin/candy-rack-icon.png';
+import { DEFAULT_SETTINGS } from '../settings.js';
+import { RewardBarCard } from './RewardBarCard.jsx';
 
 // Page layout from Figma "4.0 Responsive Layout":
 //   1280+      three columns: SC navigation card | settings card | preview
@@ -32,7 +34,6 @@ const APP_MAX_WIDTH = '1404px';
 
 // Heights of the empty placeholder cards, taken from Figma – replaced by real content later.
 const NAV_CARD_HEIGHT = '576px';
-const SETTINGS_CARD_HEIGHT = '584px';
 const PREVIEW_CARD_HEIGHT = '600px';
 
 // APP BRIDGE: title bar – the app name row the Shopify admin shows above the app.
@@ -82,6 +83,8 @@ function SectionsMenu() {
 
 function SlideCartSettings() {
   const isWide = useMediaQuery(WIDE_LAYOUT_QUERY);
+  // Not saved yet – saving comes with the contextual save bar.
+  const [settings, setSettings] = useState(DEFAULT_SETTINGS);
 
   return (
     <>
@@ -94,6 +97,8 @@ function SlideCartSettings() {
 
       <AppHeader />
 
+      {/* Note: InlineStack passes its align down – every InlineStack inside that relies on the
+          default (start) alignment has to set align="start" itself. */}
       <InlineStack align="center">
         <Box width="100%" maxWidth={APP_MAX_WIDTH}>
           <Page
@@ -121,9 +126,7 @@ function SlideCartSettings() {
                   </Card>
                 )}
 
-                <Card padding="0">
-                  <Box minHeight={SETTINGS_CARD_HEIGHT} />
-                </Card>
+                <RewardBarCard settings={settings} onChange={setSettings} />
 
                 <Card padding="0">
                   <Box minHeight={PREVIEW_CARD_HEIGHT} />
