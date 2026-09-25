@@ -4,9 +4,9 @@ import { AppProvider, Frame } from '@shopify/polaris';
 import en from '@shopify/polaris/locales/en.json';
 import '@shopify/polaris/build/esm/styles.css';
 
-// Polaris setup every prototype needs: styles, translations, and a Frame
+// Polaris setup every admin part needs: styles, translations, and a Frame
 // (Frame is required for Toast, Modal and other overlay components).
-export function PrototypeShell({ children }) {
+export function AdminShell({ children }) {
   return (
     <AppProvider i18n={en}>
       <Frame>{children}</Frame>
@@ -14,11 +14,11 @@ export function PrototypeShell({ children }) {
   );
 }
 
-// Mounts a prototype into <div id="root">. Call once from each prototype's main.jsx.
-export function renderPrototype(element) {
+// Mounts an admin part into <div id="root">. Call once from the part's main.jsx.
+export function renderAdmin(element) {
   createRoot(document.getElementById('root')).render(
     <StrictMode>
-      <PrototypeShell>{element}</PrototypeShell>
+      <AdminShell>{element}</AdminShell>
     </StrictMode>,
   );
 }
