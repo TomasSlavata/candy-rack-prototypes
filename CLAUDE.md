@@ -49,8 +49,10 @@ první část, probrat s uživatelem, jak je prototypovat.
 - Ikony jen z `@shopify/polaris-icons`.
 - Layout a mezery řeš Polaris komponentami (BlockStack, InlineStack, Box, Layout, Grid).
 - Polaris Web Components (`<s-button>` apod.) zatím nepoužívej, přechod plánujeme později.
-- Candy Rack běží v Shopify adminu přes App Bridge (contextual save bar, modaly, navigace).
-  Mimo admin App Bridge nefunguje – nahraď ho nejbližší Polaris komponentou (např. Page primaryAction).
+- Candy Rack běží v Shopify adminu přes App Bridge. Prvky, které v produkci vykresluje App Bridge
+  (modal, contextual save bar, title bar), mimo admin nefungují – stav je z nejbližší Polaris React
+  komponenty (např. `Modal`, `Page` s `primaryAction`) a označ komentářem
+  `// APP BRIDGE: <co to je v produkci>`, např. `// APP BRIDGE: contextual save bar`.
 
 ### Když Polaris nestačí
 
