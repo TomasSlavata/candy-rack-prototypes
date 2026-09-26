@@ -31,3 +31,13 @@ export const DEFAULT_SETTINGS = {
   enabled: false,
   tiers: [{ id: 'tier-1', rewardType: 'freeShipping', minimumAmount: '50.00' }],
 };
+
+// Tiers ordered from the lowest minimum purchase amount up – applied when the settings are saved,
+// so a merchant can reorder tiers just by changing their amounts. Amounts that aren't numbers go last.
+export function sortTiersByAmount(settings) {
+  const amount = (tier) => {
+    const number = Number.parseFloat(tier.minimumAmount);
+    return Number.isNaN(number) ? Infinity : number;
+  };
+  return { ...settings, tiers: [...settings.tiers].sort((a, b) => amount(a) - amount(b)) };
+}

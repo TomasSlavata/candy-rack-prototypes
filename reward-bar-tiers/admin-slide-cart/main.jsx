@@ -5,7 +5,6 @@ import {
   Box,
   Button,
   Card,
-  ContextualSaveBar,
   Image,
   InlineGrid,
   InlineStack,
@@ -13,13 +12,15 @@ import {
   Page,
   Popover,
   Text,
-  TopBar,
+  Toast,
 } from '@shopify/polaris';
 import { MenuIcon } from '@shopify/polaris-icons';
 import { renderAdmin } from '../../shared/admin/AdminShell.jsx';
+import { AdminTopBar, SaveBar } from '../../shared/custom/SaveBar.jsx';
 import { useMediaQuery } from '../../shared/custom/useMediaQuery.js';
+import { useFeatureSettings } from '../../shared/usePersistentState.js';
 import appIcon from '../../shared/admin/candy-rack-icon.png';
-import { DEFAULT_SETTINGS } from '../settings.js';
+import { DEFAULT_SETTINGS, sortTiersByAmount } from '../settings.js';
 import { RewardBarCard } from './RewardBarCard.jsx';
 
 // Page layout from Figma "4.0 Responsive Layout":
@@ -83,17 +84,29 @@ function SectionsMenu() {
 
 function SlideCartSettings() {
   const isWide = useMediaQuery(WIDE_LAYOUT_QUERY);
-  // Not saved yet – saving comes with the contextual save bar.
-  const [settings, setSettings] = useState(DEFAULT_SETTINGS);
+  // `saved` lives in the browser (survives reloads, shared with the storefront part), `settings` is the edited copy.
+  const [saved, save, reset] = useFeatureSettings(DEFAULT_SETTINGS);
+  const [settings, setSettings] = useState(saved);
+  const isDirty = JSON.stringify(settings) !== JSON.stringify(saved);
+  const [toast, setToast] = useState(null);
+
+  const saveSettings = () => {
+    const sorted = sortTiersByAmount(settings);
+    save(sorted);
+    setSettings(sorted);
+    setToast('Settings saved');
+  };
+
+  // Restoring defaults saves them right away, so the save bar doesn't show up.
+  const restoreDefaults = () => {
+    reset();
+    setSettings(DEFAULT_SETTINGS);
+    setToast('Default settings restored');
+  };
 
   return (
     <>
-      {/* APP BRIDGE: contextual save bar – shown all the time until saving is wired up. */}
-      <ContextualSaveBar
-        message="Unsaved changes"
-        saveAction={{ content: 'Save', disabled: true }}
-        discardAction={{ content: 'Discard' }}
-      />
+      <SaveBar open={isDirty} onSave={saveSettings} onDiscard={() => setSettings(saved)} />
 
       <AppHeader />
 
@@ -105,7 +118,7 @@ function SlideCartSettings() {
             fullWidth
             title="Slide cart"
             titleMetadata={<Badge>Inactive</Badge>}
-            secondaryActions={[{ content: 'Restore to defaults', onAction: () => {} }]}
+            secondaryActions={[{ content: 'Restore to defaults', onAction: restoreDefaults }]}
           >
             <BlockStack gap="400">
               {!isWide && (
@@ -134,14 +147,17 @@ function SlideCartSettings() {
               </InlineGrid>
             </BlockStack>
           </Page>
+
+          {/* APP BRIDGE: toast (shopify.toast.show) – the Shopify admin shows it at the bottom of the page. */}
+          {toast && <Toast content={toast} onDismiss={() => setToast(null)} />}
         </Box>
       </InlineStack>
     </>
   );
 }
 
-// The Shopify admin around the app: dark top bar and the grey admin navigation (without items).
+// The Shopify admin around the app: dark top bar (with the save bar) and the grey admin navigation (without items).
 renderAdmin(<SlideCartSettings />, {
-  topBar: <TopBar />,
+  topBar: <AdminTopBar />,
   navigation: <Navigation location="/" />,
 });
