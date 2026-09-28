@@ -93,38 +93,43 @@ function SlideCartSettings() {
   const isDirty = JSON.stringify(settings) !== JSON.stringify(saved);
   const [toast, setToast] = useState(null);
 
-  // Errors show up after a failed Save and then update as the merchant edits – fixed ones disappear.
-  const [showErrors, setShowErrors] = useState(false);
-  const errors = showErrors ? validateTiers(settings.tiers) : [];
+  // After a failed Save, like in Shopify admin:
+  //   banner  – lists the errors found at that Save and stays as it is until the next Save
+  //   fields and tier badges – follow the edits right away (a fixed field loses its error)
+  const [bannerErrors, setBannerErrors] = useState([]);
+  const fieldErrors = bannerErrors.length > 0 ? validateTiers(settings.tiers) : [];
   const [focusRequest, setFocusRequest] = useState(null);
-  const focusTier = (tierId, focusField = false) =>
+  const focusTier = (tierId, focusField = false) => {
+    // The banner can still list a tier that has been deleted since.
+    if (!settings.tiers.some((tier) => tier.id === tierId)) return;
     setFocusRequest((current) => ({ tierId, focusField, key: (current?.key ?? 0) + 1 }));
+  };
 
   const saveSettings = () => {
     const found = validateTiers(settings.tiers);
     if (found.length > 0) {
       // Not saved – the save bar stays, the first tier with an error opens.
-      setShowErrors(true);
+      setBannerErrors(found);
       focusTier(found[0].tierId);
       return;
     }
     const sorted = sortTiersByAmount(settings);
     save(sorted);
     setSettings(sorted);
-    setShowErrors(false);
+    setBannerErrors([]);
     setToast('Settings saved');
   };
 
   const discardChanges = () => {
     setSettings(saved);
-    setShowErrors(false);
+    setBannerErrors([]);
   };
 
   // Restoring defaults saves them right away, so the save bar doesn't show up.
   const restoreDefaults = () => {
     reset();
     setSettings(DEFAULT_SETTINGS);
-    setShowErrors(false);
+    setBannerErrors([]);
     setToast('Default settings restored');
   };
 
@@ -145,18 +150,18 @@ function SlideCartSettings() {
             secondaryActions={[{ content: 'Restore to defaults', onAction: restoreDefaults }]}
           >
             <BlockStack gap="400">
-              {errors.length > 0 && (
+              {bannerErrors.length > 0 && (
                 <Banner
                   tone="critical"
                   title={
-                    errors.length === 1
+                    bannerErrors.length === 1
                       ? 'There is 1 error in these settings:'
-                      : `There are ${errors.length} errors in these settings:`
+                      : `There are ${bannerErrors.length} errors in these settings:`
                   }
                 >
                   {/* Each error opens its tier – only one tier can be open, so the list is the way around. */}
                   <List type="bullet">
-                    {errors.map((error) => (
+                    {bannerErrors.map((error) => (
                       <List.Item key={error.message}>
                         <Link monochrome onClick={() => focusTier(error.tierId, true)}>
                           {error.message}
@@ -188,7 +193,7 @@ function SlideCartSettings() {
                 <RewardBarCard
                   settings={settings}
                   onChange={setSettings}
-                  errors={errors}
+                  errors={fieldErrors}
                   focusRequest={focusRequest}
                 />
 
