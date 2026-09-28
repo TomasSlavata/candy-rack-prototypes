@@ -50,7 +50,7 @@ první část, probrat s uživatelem, jak je prototypovat.
 - Layout a mezery řeš Polaris komponentami (BlockStack, InlineStack, Box, Layout, Grid).
 - Polaris Web Components (`<s-button>` apod.) zatím nepoužívej, přechod plánujeme později.
 - Candy Rack běží v Shopify adminu přes App Bridge. Prvky, které v produkci vykresluje App Bridge
-  (modal, contextual save bar, title bar), mimo admin nefungují – stav je z nejbližší Polaris React
+  (modal, contextual save bar, title bar, toast), mimo admin nefungují – stav je z nejbližší Polaris React
   komponenty (např. `Modal`, `Page` s `primaryAction`) a označ komentářem
   `// APP BRIDGE: <co to je v produkci>`, např. `// APP BRIDGE: contextual save bar`.
 
@@ -86,6 +86,7 @@ Pokud je vlastní řešení schválené:
 
 - Nepracuj přímo v `main`. Každá změna na vlastní větvi, pak pull request:
   `prototype/<funkce>` pro prototypy, `setup/…` pro změny projektu, `fix/…` pro opravy.
-- Uživatel se Git učí: u každého příkazu vysvětli česky, co dělá. Commit, push a merge
-  nech na něm, pokud výslovně neřekne jinak.
+- Git obsluhuje Claude (větve, commit, push, pull, otevření PR). Před každou takovou akcí se
+  uživatele krátce zeptej (co a proč) a počkej na souhlas. Příkazy do terminálu uživateli nedávej.
+- Uživatel jen schvaluje a merguje pull request na GitHubu. Po merge stáhni aktuální `main`.
 - Před commitem ověř `npm run build`.
