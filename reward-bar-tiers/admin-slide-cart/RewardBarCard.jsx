@@ -25,37 +25,42 @@ import {
 } from '@shopify/polaris-icons';
 import { BoxButton } from '../../shared/custom/BoxButton.jsx';
 import { RichTextField } from '../../shared/custom/RichTextField.jsx';
-import { CURRENCY, REWARD_TYPES } from '../settings.js';
+import { revealElement } from '../../shared/revealElement.js';
+import { CURRENCY, REWARD_TYPES, formatAmount, parseAmount } from '../settings.js';
 
 const AMOUNT_STEP = 50;
 const MAX_TIERS = 3;
 
 const REWARD_TYPE_OPTIONS = Object.entries(REWARD_TYPES).map(([value, { label }]) => ({ value, label }));
 
-const formatAmount = (amount) => {
-  const number = Number.parseFloat(amount);
-  return Number.isNaN(number) ? amount : number.toFixed(2);
+// The amount field takes numbers only: digits, commas as thousands separators and one decimal point,
+// max 2 decimals. Anything else typed or pasted is left out.
+const toAmountInput = (value) => {
+  const [whole, ...rest] = value.replace(/[^\d.,]/g, '').split('.');
+  return rest.length > 0 ? `${whole}.${rest.join('').replace(/,/g, '').slice(0, 2)}` : whole;
 };
 
 const newTierId = () => `tier-${Date.now()}`;
 
 // CUSTOM: Polaris Badge puts its icon before the text, the design has the info icon after it.
-// Built to look like the Polaris Badge (same tokens), the icon shows the gift product in a tooltip.
-function TierBadge({ children, info }) {
+// Built to look like the Polaris Badge (same tokens as its default and critical tone),
+// the icon shows the gift product in a tooltip.
+function TierBadge({ children, info, critical }) {
+  const tone = critical ? 'critical' : 'subdued';
   return (
     <Box
-      background="bg-fill-transparent-secondary"
+      background={critical ? 'bg-fill-critical-secondary' : 'bg-fill-transparent-secondary'}
       borderRadius="200"
       paddingInline="200"
       paddingBlock={info ? '0' : '050'}
     >
       <InlineStack gap="100" blockAlign="center" wrap={false}>
-        <Text as="span" variant="bodySm" fontWeight="medium" tone="subdued">
+        <Text as="span" variant="bodySm" fontWeight="medium" tone={tone}>
           {children}
         </Text>
         {info && (
           <Tooltip content={info}>
-            <Text as="span" tone="subdued">
+            <Text as="span" tone={tone}>
               <Icon source={InfoIcon} tone="inherit" accessibilityLabel={info} />
             </Text>
           </Tooltip>
@@ -105,7 +110,7 @@ function TierMenu({ canDelete, onDelete }) {
   );
 }
 
-function Tier({ tier, number, open, canDelete, onToggle, onOpened, onChange, onDelete }) {
+function Tier({ tier, number, open, error, canDelete, onToggle, onOpened, onChange, onDelete }) {
   const reward = REWARD_TYPES[tier.rewardType];
   const contentId = `${tier.id}-settings`;
 
@@ -125,7 +130,7 @@ function Tier({ tier, number, open, canDelete, onToggle, onOpened, onChange, onD
               <Text as="h3" variant="bodyMd" fontWeight="medium">
                 Tier #{number}
               </Text>
-              <TierBadge info={reward.giftProduct}>
+              <TierBadge info={reward.giftProduct} critical={Boolean(error)}>
                 Spend {CURRENCY} {formatAmount(tier.minimumAmount)} → {reward.summary}
               </TierBadge>
             </InlineStack>
@@ -164,7 +169,8 @@ function Tier({ tier, number, open, canDelete, onToggle, onOpened, onChange, onD
               inputMode="decimal"
               autoComplete="off"
               value={tier.minimumAmount}
-              onChange={(minimumAmount) => onChange({ minimumAmount })}
+              error={error}
+              onChange={(value) => onChange({ minimumAmount: toAmountInput(value) })}
               onBlur={() => onChange({ minimumAmount: formatAmount(tier.minimumAmount) })}
             />
             <RichTextField label="Text before reward" value={reward.textBefore} variables />
@@ -176,38 +182,71 @@ function Tier({ tier, number, open, canDelete, onToggle, onOpened, onChange, onD
   );
 }
 
+// Scrolls a tier into view; with focusField also puts the cursor in its Minimum purchase amount field
+// (e.g. after clicking its error in the banner), which also takes the focus off the banner link.
+function showTier({ id, focusField }) {
+  const element = document.getElementById(id);
+  revealElement(element);
+  if (focusField) element?.querySelector('input')?.focus({ preventScroll: true });
+}
+
 // Reward bar section of the slide cart settings: on/off and up to 3 reward tiers.
 // Only one tier is open at a time, a new tier opens right away.
-export function RewardBarCard({ settings, onChange }) {
+//   errors        – validation errors to show (see validateTiers in settings.js), empty when there are none
+//   focusRequest  – { tierId, key, focusField }: open that tier and scroll to it (and put the cursor
+//                   in its Minimum purchase amount field), a new key repeats the request
+export function RewardBarCard({ settings, onChange, errors = [], focusRequest }) {
   const { enabled, tiers } = settings;
   const [openTierId, setOpenTierId] = useState(tiers[0]?.id);
   const [addedTierId, setAddedTierId] = useState(null);
+  const [scrollTarget, setScrollTarget] = useState(null); // { id, focusField }
+
+  const fieldError = (id) => errors.find((error) => error.tierId === id)?.field;
 
   // A new tier is added closed and opens one frame later, so it expands while the previous one collapses –
   // the two animations cancel out and the card keeps its height instead of jumping.
   useEffect(() => {
     if (!addedTierId) return;
-    const frame = requestAnimationFrame(() => setOpenTierId(addedTierId));
+    const frame = requestAnimationFrame(() => {
+      setOpenTierId(addedTierId);
+      setAddedTierId(null);
+    });
     return () => cancelAnimationFrame(frame);
   }, [addedTierId]);
 
-  // Once the new tier is open, scroll it into view if it ended up off screen (mostly on mobile).
+  // Open the requested tier (e.g. one with an error) – an open tier is shown right away,
+  // a closed one once it has finished opening.
+  useEffect(() => {
+    if (!focusRequest) return;
+    const target = { id: focusRequest.tierId, focusField: focusRequest.focusField };
+    if (openTierId === target.id) {
+      showTier(target);
+    } else {
+      setOpenTierId(target.id);
+      setScrollTarget(target);
+    }
+    // Runs only for a new request, not when the open tier changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusRequest?.key]);
+
+  // Once a new or requested tier is open, scroll it into view if it ended up off screen (mostly on mobile).
   const onTierOpened = (id) => {
-    if (id !== addedTierId) return;
-    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    setAddedTierId(null);
+    if (id !== scrollTarget?.id) return;
+    showTier(scrollTarget);
+    setScrollTarget(null);
   };
 
   const setTiers = (nextTiers) => onChange({ ...settings, tiers: nextTiers });
   const updateTier = (id, patch) => setTiers(tiers.map((tier) => (tier.id === id ? { ...tier, ...patch } : tier)));
 
   const addTier = () => {
-    const highestAmount = Math.max(0, ...tiers.map((tier) => Number.parseFloat(tier.minimumAmount) || 0));
+    const highestAmount = Math.max(0, ...tiers.map((tier) => parseAmount(tier.minimumAmount) ?? 0));
     const usedTypes = new Set(tiers.map((tier) => tier.rewardType));
     const rewardType = Object.keys(REWARD_TYPES).find((type) => !usedTypes.has(type)) ?? 'orderDiscount';
-    const tier = { id: newTierId(), rewardType, minimumAmount: formatAmount(highestAmount + AMOUNT_STEP) };
+    const tier = { id: newTierId(), rewardType, minimumAmount: formatAmount(String(highestAmount + AMOUNT_STEP)) };
     setTiers([...tiers, tier]);
     setAddedTierId(tier.id);
+    setScrollTarget({ id: tier.id });
   };
 
   const deleteTier = (id) => setTiers(tiers.filter((tier) => tier.id !== id));
@@ -233,6 +272,7 @@ export function RewardBarCard({ settings, onChange }) {
             tier={tier}
             number={index + 1}
             open={openTierId === tier.id}
+            error={fieldError(tier.id)}
             canDelete={tiers.length > 1}
             onToggle={() => setOpenTierId(openTierId === tier.id ? null : tier.id)}
             onOpened={() => onTierOpened(tier.id)}

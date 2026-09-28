@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import {
   Badge,
+  Banner,
   BlockStack,
   Box,
   Button,
@@ -8,6 +9,8 @@ import {
   Image,
   InlineGrid,
   InlineStack,
+  Link,
+  List,
   Navigation,
   Page,
   Popover,
@@ -20,7 +23,7 @@ import { AdminTopBar, SaveBar } from '../../shared/custom/SaveBar.jsx';
 import { useMediaQuery } from '../../shared/custom/useMediaQuery.js';
 import { useFeatureSettings } from '../../shared/usePersistentState.js';
 import appIcon from '../../shared/admin/candy-rack-icon.png';
-import { DEFAULT_SETTINGS, sortTiersByAmount } from '../settings.js';
+import { DEFAULT_SETTINGS, sortTiersByAmount, validateTiers } from '../settings.js';
 import { RewardBarCard } from './RewardBarCard.jsx';
 
 // Page layout from Figma "4.0 Responsive Layout":
@@ -90,23 +93,44 @@ function SlideCartSettings() {
   const isDirty = JSON.stringify(settings) !== JSON.stringify(saved);
   const [toast, setToast] = useState(null);
 
+  // Errors show up after a failed Save and then update as the merchant edits – fixed ones disappear.
+  const [showErrors, setShowErrors] = useState(false);
+  const errors = showErrors ? validateTiers(settings.tiers) : [];
+  const [focusRequest, setFocusRequest] = useState(null);
+  const focusTier = (tierId, focusField = false) =>
+    setFocusRequest((current) => ({ tierId, focusField, key: (current?.key ?? 0) + 1 }));
+
   const saveSettings = () => {
+    const found = validateTiers(settings.tiers);
+    if (found.length > 0) {
+      // Not saved – the save bar stays, the first tier with an error opens.
+      setShowErrors(true);
+      focusTier(found[0].tierId);
+      return;
+    }
     const sorted = sortTiersByAmount(settings);
     save(sorted);
     setSettings(sorted);
+    setShowErrors(false);
     setToast('Settings saved');
+  };
+
+  const discardChanges = () => {
+    setSettings(saved);
+    setShowErrors(false);
   };
 
   // Restoring defaults saves them right away, so the save bar doesn't show up.
   const restoreDefaults = () => {
     reset();
     setSettings(DEFAULT_SETTINGS);
+    setShowErrors(false);
     setToast('Default settings restored');
   };
 
   return (
     <>
-      <SaveBar open={isDirty} onSave={saveSettings} onDiscard={() => setSettings(saved)} />
+      <SaveBar open={isDirty} onSave={saveSettings} onDiscard={discardChanges} />
 
       <AppHeader />
 
@@ -121,6 +145,28 @@ function SlideCartSettings() {
             secondaryActions={[{ content: 'Restore to defaults', onAction: restoreDefaults }]}
           >
             <BlockStack gap="400">
+              {errors.length > 0 && (
+                <Banner
+                  tone="critical"
+                  title={
+                    errors.length === 1
+                      ? 'There is 1 error in these settings:'
+                      : `There are ${errors.length} errors in these settings:`
+                  }
+                >
+                  {/* Each error opens its tier – only one tier can be open, so the list is the way around. */}
+                  <List type="bullet">
+                    {errors.map((error) => (
+                      <List.Item key={error.message}>
+                        <Link monochrome onClick={() => focusTier(error.tierId, true)}>
+                          {error.message}
+                        </Link>
+                      </List.Item>
+                    ))}
+                  </List>
+                </Banner>
+              )}
+
               {!isWide && (
                 // Cards go edge to edge below 490 px, the button keeps the page padding.
                 <Box paddingInline={{ xs: '400', sm: '0' }}>
@@ -139,7 +185,12 @@ function SlideCartSettings() {
                   </Card>
                 )}
 
-                <RewardBarCard settings={settings} onChange={setSettings} />
+                <RewardBarCard
+                  settings={settings}
+                  onChange={setSettings}
+                  errors={errors}
+                  focusRequest={focusRequest}
+                />
 
                 <Card padding="0">
                   <Box minHeight={PREVIEW_CARD_HEIGHT} />
