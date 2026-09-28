@@ -1,0 +1,24 @@
+/* CUSTOM: see SaveBar.jsx. Polaris tokens only. */
+
+/* Discard is a Polaris tertiary button recolored for the dark bar – the same variables
+   Polaris ContextualSaveBar sets on its own Discard button. */
+.cr-SaveBarDiscard {
+  display: flex;
+}
+
+/* Set on the button itself – Polaris declares these variables on the button class. */
+.cr-SaveBarDiscard [class*='Polaris-Button--variantTertiary'] {
+  --pc-button-bg: var(--p-color-bg-fill-inverse-hover);
+  --pc-button-bg_hover: var(--p-color-bg-fill-inverse-active);
+  --pc-button-bg_active: var(--p-color-bg-fill-inverse-active);
+  --pc-button-color: var(--p-color-text-inverse);
+}
+
+/* Without a logo the Polaris top bar content is only as tall as the pill and sticks to the top –
+   the slot takes the full top bar height and centers the pill in it. */
+.cr-SaveBarSlot {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: var(--pg-top-bar-height);
+}

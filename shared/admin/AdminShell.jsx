@@ -6,19 +6,20 @@ import '@shopify/polaris/build/esm/styles.css';
 
 // Polaris setup every admin part needs: styles, translations, and a Frame
 // (Frame is required for Toast, Modal and other overlay components).
-export function AdminShell({ children }) {
+// frameProps go to the Frame, e.g. { navigation, topBar } to imitate the Shopify admin around the app.
+export function AdminShell({ children, frameProps }) {
   return (
     <AppProvider i18n={en}>
-      <Frame>{children}</Frame>
+      <Frame {...frameProps}>{children}</Frame>
     </AppProvider>
   );
 }
 
 // Mounts an admin part into <div id="root">. Call once from the part's main.jsx.
-export function renderAdmin(element) {
+export function renderAdmin(element, frameProps) {
   createRoot(document.getElementById('root')).render(
     <StrictMode>
-      <AdminShell>{element}</AdminShell>
+      <AdminShell frameProps={frameProps}>{element}</AdminShell>
     </StrictMode>,
   );
 }

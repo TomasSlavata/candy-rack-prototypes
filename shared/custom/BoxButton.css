@@ -1,0 +1,25 @@
+/* CUSTOM: see BoxButton.jsx. Polaris tokens only. */
+.cr-BoxButton {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  padding: var(--p-space-300);
+  border: var(--p-border-width-025) solid var(--p-color-border);
+  border-radius: var(--p-border-radius-200);
+  background: var(--p-color-bg-surface);
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+/* Hover and active use the same color (Figma annotation). */
+.cr-BoxButton:hover,
+.cr-BoxButton:active {
+  background: var(--p-color-bg-surface-hover);
+}
+
+.cr-BoxButton:focus-visible {
+  outline: var(--p-border-width-050) solid var(--p-color-border-focus);
+  outline-offset: var(--p-space-025);
+}
