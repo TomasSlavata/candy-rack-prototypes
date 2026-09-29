@@ -1,0 +1,51 @@
+/* CUSTOM: Setup cell – see SetupCell in MarketsSection.jsx. Polaris tokens only.
+   Fills the flush IndexTable cell with the same padding the other cells have. */
+.cr-SetupCell {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  padding: var(--p-space-150);
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+/* Open popover: lighter while the pointer is elsewhere (Figma 11.7), hover color when over the cell (11.6). */
+.cr-SetupCell[aria-expanded='true'] {
+  background: var(--p-color-bg-surface-selected);
+}
+
+.cr-SetupCell:hover {
+  background: var(--p-color-bg-surface-tertiary-active);
+}
+
+.cr-SetupCell:focus-visible {
+  outline: var(--p-border-width-050) solid var(--p-color-border-focus);
+  outline-offset: calc(-1 * var(--p-border-width-050));
+}
+
+/* The chevron shows while the row is hovered or the cell has keyboard focus.
+   With the popover open the cell stays highlighted, the chevron only shows on hover (Figma 11.7). */
+.cr-SetupCell__Chevron {
+  display: flex;
+  visibility: hidden;
+}
+
+tr:hover .cr-SetupCell__Chevron,
+.cr-SetupCell:focus-visible .cr-SetupCell__Chevron {
+  visibility: visible;
+}
+
+/* CUSTOM: Polaris sets the row hover from React mouse events, and for React the popover (rendered
+   elsewhere on the page) belongs to the row – so the row would stay hovered while the pointer is over
+   the popover. With a cell's popover open, the row keeps its hover only while the pointer is really
+   over it (CSS :hover), otherwise only the cell stays highlighted (Figma 11.7).
+   The row class is repeated to outweigh Polaris' own hover rule for the first and last cell. */
+.Polaris-IndexTable__TableRow.Polaris-IndexTable__TableRow--hovered:not(:hover):has(.cr-SetupCell[aria-expanded='true']),
+.Polaris-IndexTable__TableRow.Polaris-IndexTable__TableRow--hovered:not(:hover):has(.cr-SetupCell[aria-expanded='true'])
+  .Polaris-IndexTable__TableCell {
+  background-color: var(--p-color-bg-surface);
+}
