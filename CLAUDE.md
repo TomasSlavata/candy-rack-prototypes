@@ -1,92 +1,101 @@
 # Candy Rack Prototypes
 
-Interaktivní prototypy Shopify appky Candy Rack (upsell/cross-sell, slide cart) – admin i storefront.
-Uživatel je product designer, ne vývojář, a Git se teprve učí.
+Interactive prototypes of the Candy Rack Shopify app (upsell/cross-sell, slide cart) – admin and storefront.
+The user is a product designer, not a developer, and is still learning Git.
 
-## Struktura
+## Language
 
-Každá funkce má složku v kořeni repa, v ní jednu nebo více částí. Každá část je samostatná stránka
-(`index.html` + `main.jsx`) a na přehledové stránce se objeví automaticky.
+- Communicate with the user in Czech.
+- Everything in the repo and on GitHub is in English: code, comments, UI texts, commit messages,
+  PR titles and PR descriptions. The team includes developers who don't speak Czech.
+
+## Structure
+
+Each feature has a folder in the repo root with one or more parts in it. Each part is a separate page
+(`index.html` + `main.jsx`) and shows up on the overview page automatically.
 
 ```
-reward-bar/                  funkce
-  settings.js                sdílené výchozí nastavení všech částí funkce
-  admin-slide-cart/          část = jedna obrazovka
+reward-bar/                  feature
+  settings.js                default settings shared by all parts of the feature
+  admin-slide-cart/          part = one screen
   storefront-slide-cart/
 shared/
-  admin/AdminShell.jsx       Polaris setup – admin a theme-editor části začínají renderAdmin()
-  storefront/                StorefrontShell.jsx + storefront.css (tokeny --sf-…)
-  usePersistentState.js      ukládání do localStorage; useFeatureSettings() sdílí nastavení mezi částmi funkce
-_template/                   vzorová funkce – nový prototyp = zkopírovat tuhle složku
+  admin/AdminShell.jsx       Polaris setup – admin and theme-editor parts start with renderAdmin()
+  storefront/                StorefrontShell.jsx + storefront.css (--sf-… tokens)
+  usePersistentState.js      saving to localStorage; useFeatureSettings() shares settings between a feature's parts
+_template/                   sample feature – a new prototype = copy this folder
 ```
 
-- Složky začínající `_` jsou jen lokální: vidět v `npm run dev`, nepublikují se.
-- Admin část ukládá nastavení přes `useFeatureSettings`, storefront část ho čte – otevřené záložky se synchronizují.
+- Folders starting with `_` are local only: visible in `npm run dev`, not published.
+- The admin part saves settings via `useFeatureSettings`, the storefront part reads them – open tabs stay in sync.
 
-### Slovník částí
+### Part glossary
 
-Názvy složek částí používej jen z tohoto seznamu. Novou obrazovku do něj přidej po dohodě
-s uživatelem (a doplň popisek do `PART_LABELS` v `index.jsx`).
+Only use part folder names from this list. Add a new screen to it after agreeing with the user
+(and add its label to `PART_LABELS` in `index.jsx`).
 
-| Složka | Obrazovka | Postaveno z |
+| Folder | Screen | Built from |
 |---|---|---|
-| `admin-dashboard` | Dashboard (seznam nabídek) | Polaris React |
+| `admin-dashboard` | Dashboard (list of offers) | Polaris React |
 | `admin-edit-offer` | Create / Edit offer | Polaris React |
-| `admin-slide-cart` | Nastavení slide cartu (SC admin) | Polaris React |
+| `admin-slide-cart` | Slide cart settings (SC admin) | Polaris React |
 | `admin-customization` | Customization | Polaris React |
 | `admin-analytics` | Analytics | Polaris React |
-| `theme-editor` | Nastavení app bloku v Shopify theme editoru | Polaris React |
-| `storefront-product-page` | Produktová stránka (pop-up, embedded blok) | vlastní markup |
-| `storefront-slide-cart` | Slide cart | vlastní markup |
-| `storefront-thank-you` | Thank you / Order status stránka | vlastní markup |
+| `theme-editor` | App block settings in the Shopify theme editor | Polaris React |
+| `storefront-product-page` | Product page (pop-up, embedded block) | custom markup |
+| `storefront-slide-cart` | Slide cart | custom markup |
+| `storefront-thank-you` | Thank you / Order status page | custom markup |
 
-Checkout a post-purchase se v Shopify staví z komponent checkout extensions – než pro ně vznikne
-první část, probrat s uživatelem, jak je prototypovat.
+In Shopify, checkout and post-purchase are built from checkout extension components – before the first
+part for them is created, discuss with the user how to prototype them.
 
 ## Admin UI (`admin-…`)
 
-- Všechno admin UI stav z komponent Polaris React (`@shopify/polaris`, nejnovější v13).
-- Ikony jen z `@shopify/polaris-icons`.
-- Layout a mezery řeš Polaris komponentami (BlockStack, InlineStack, Box, Layout, Grid).
-- Polaris Web Components (`<s-button>` apod.) zatím nepoužívej, přechod plánujeme později.
-- Candy Rack běží v Shopify adminu přes App Bridge. Prvky, které v produkci vykresluje App Bridge
-  (modal, contextual save bar, title bar, toast), mimo admin nefungují – stav je z nejbližší Polaris React
-  komponenty (např. `Modal`, `Page` s `primaryAction`) a označ komentářem
-  `// APP BRIDGE: <co to je v produkci>`, např. `// APP BRIDGE: contextual save bar`.
+- Build all admin UI from Polaris React components (`@shopify/polaris`, latest v13).
+- Icons only from `@shopify/polaris-icons`.
+- Handle layout and spacing with Polaris components (BlockStack, InlineStack, Box, Layout, Grid).
+- Don't use Polaris Web Components (`<s-button>` etc.) yet, the switch is planned for later.
+- Candy Rack runs in the Shopify admin via App Bridge. Elements that App Bridge renders in production
+  (modal, contextual save bar, title bar, toast) don't work outside the admin – build them from the closest
+  Polaris React component (e.g. `Modal`, `Page` with `primaryAction`) and mark them with a comment
+  `// APP BRIDGE: <what it is in production>`, e.g. `// APP BRIDGE: contextual save bar`.
 
-### Když Polaris nestačí
+### When Polaris isn't enough
 
-Pokud něco nejde postavit čistě z Polaris komponent (komponenta neexistuje nebo nepodporuje
-potřebné chování), **nestav vlastní řešení bez souhlasu**:
-1. Zastav se a popiš problém: co Polaris neumí a proč.
-2. Navrhni možnosti, vždy včetně varianty „čistě Polaris“ (i s kompromisem v UX), a doporuč jednu.
-3. Počkej na rozhodnutí uživatele.
+If something can't be built purely from Polaris components (the component doesn't exist or doesn't support
+the needed behavior), **don't build a custom solution without approval**:
+1. Stop and describe the problem: what Polaris can't do and why.
+2. Propose options, always including a "pure Polaris" option (even with a UX compromise), and recommend one.
+3. Wait for the user's decision.
 
-Pokud je vlastní řešení schválené:
-- Barvy, mezery, rádiusy, stíny, typografie a animace jen přes Polaris tokeny
-  (CSS proměnné `--p-…`, např. `var(--p-space-400)`, `var(--p-color-bg-surface)`), nikdy natvrdo.
-- Skládej ho z Polaris komponent, kde to jde (Box, Text, Icon…), vlastní markup jen tam, kde je nutný.
-- Znovupoužitelné vlastní komponenty dej do `shared/custom/`, jednorázové nech ve složce části.
-- Označ ho v kódu komentářem `// CUSTOM: <proč Polaris nestačí>`.
+If a custom solution is approved:
+- Colors, spacing, radii, shadows, typography and animations only via Polaris tokens
+  (CSS variables `--p-…`, e.g. `var(--p-space-400)`, `var(--p-color-bg-surface)`), never hard-coded.
+- Compose it from Polaris components where possible (Box, Text, Icon…), custom markup only where necessary.
+- Put reusable custom components in `shared/custom/`, keep one-off ones in the part's folder.
+- Mark it in the code with a comment `// CUSTOM: <why Polaris isn't enough>`.
 
 ## Theme editor (`theme-editor`)
 
-- Napodobuje Shopify theme editor (Online Store → Customize) z Polaris React komponent.
-- Nastavení app bloku navrhuj jen z typů polí, které podporuje Liquid schema theme app extension
+- Imitates the Shopify theme editor (Online Store → Customize) with Polaris React components.
+- Design app block settings only from field types supported by the theme app extension Liquid schema
   (checkbox, select, radio, range, number, text, textarea, color, product, collection…).
-  Nic, co schema neumí – vývojáři by to nemohli postavit.
+  Nothing the schema can't do – developers couldn't build it.
 
 ## Storefront (`storefront-…`)
 
-- Polaris se nepoužívá – imitujeme to, co vidí zákazník v obchodě.
-- Styly jen přes tokeny `--sf-…` ze `shared/storefront/storefront.css`, žádné natvrdo zapsané hodnoty.
-- Styly části do `styles.css` ve složce části.
+- No Polaris – we imitate what the customer sees in the store.
+- Styles only via `--sf-…` tokens from `shared/storefront/storefront.css`, no hard-coded values.
+- A part's styles go to `styles.css` in the part's folder.
 
 ## Git workflow
 
-- Nepracuj přímo v `main`. Každá změna na vlastní větvi, pak pull request:
-  `prototype/<funkce>` pro prototypy, `setup/…` pro změny projektu, `fix/…` pro opravy.
-- Git obsluhuje Claude (větve, commit, push, pull, otevření PR). Před každou takovou akcí se
-  uživatele krátce zeptej (co a proč) a počkej na souhlas. Příkazy do terminálu uživateli nedávej.
-- Uživatel jen schvaluje a merguje pull request na GitHubu. Po merge stáhni aktuální `main`.
-- Před commitem ověř `npm run build`.
+- Don't work directly in `main`. Every change on its own branch, then a pull request:
+  `prototype/<feature>` for prototypes, `setup/…` for project changes, `fix/…` for fixes.
+- Claude runs Git (branches, commit, push, pull, opening PRs). Before each such action, briefly ask
+  the user (what and why) and wait for approval. Don't give the user terminal commands.
+- The user only approves and merges pull requests on GitHub. After a merge, pull the latest `main`.
+- Clean up after a merge (approved as standard, no need to ask): PRs are squash-merged, so
+  `git branch -d` reports the branch as not merged. Check that `git diff origin/<branch> main` is empty,
+  then delete the branch with `-D` locally and on GitHub.
+- Check `npm run build` before committing.
