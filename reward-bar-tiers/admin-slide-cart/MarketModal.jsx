@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Banner, BlockStack, Button, InlineStack, Modal, Text, TextField, Tooltip } from '@shopify/polaris';
+import { Banner, BlockStack, Box, Button, InlineStack, Modal, Text, TextField, Tooltip } from '@shopify/polaris';
 import { HideIcon, ViewIcon } from '@shopify/polaris-icons';
 import {
   EMPTY_MARKET,
@@ -23,14 +23,19 @@ function TierAmount({ entry, value, number, currency, fixed, placeholder, error,
   return (
     <BlockStack gap="100">
       <InlineStack align="space-between" blockAlign="end" gap="200" wrap={false}>
-        <InlineStack align="start" gap="200" blockAlign="center">
-          <Text as="span" tone={hidden ? 'disabled' : undefined}>
-            Tier #{number}
-          </Text>
-          <TierBadge info={reward.giftProduct} disabled={hidden}>
-            {currency} {formatAmount(amount)} → {reward.summary}
-          </TierBadge>
-        </InlineStack>
+        {/* minWidth 0 lets a long badge end with "…" instead of pushing out of the modal. */}
+        <Box minWidth="0">
+          <InlineStack align="start" gap="200" blockAlign="center">
+            <Text as="span" tone={hidden ? 'disabled' : undefined}>
+              Tier #{number}
+            </Text>
+            <Box minWidth="0">
+              <TierBadge info={reward.giftProduct} disabled={hidden}>
+                {currency} {formatAmount(amount)} → {reward.summary}
+              </TierBadge>
+            </Box>
+          </InlineStack>
+        </Box>
         <Tooltip content={toggleLabel}>
           <InlineStack>
             <Button

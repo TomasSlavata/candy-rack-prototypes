@@ -192,12 +192,13 @@ export function MarketsSection({ settings, onChange }) {
               />
             </IconButtonSlot>
           }
-        >
-          <Text as="h4" variant="bodyMd" fontWeight="medium">
-            Markets
-          </Text>
-          {customizedCount > 0 && <Badge tone="info">{`${customizedCount} customized`}</Badge>}
-        </BoxHeader>
+          title={
+            <Text as="h4" variant="bodyMd" fontWeight="medium">
+              Markets
+            </Text>
+          }
+          badge={customizedCount > 0 && <Badge tone="info">{`${customizedCount} customized`}</Badge>}
+        />
 
         <Collapsible id={CONTENT_ID} open={open}>
           <Box background="bg-surface">

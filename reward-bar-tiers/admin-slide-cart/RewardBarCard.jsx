@@ -83,14 +83,17 @@ function Tier({ tier, number, open, error, canDelete, onToggle, onOpened, onChan
             </IconButtonSlot>
           </>
         }
-      >
-        <Text as="h3" variant="bodyMd" fontWeight="medium">
-          Tier #{number}
-        </Text>
-        <TierBadge info={reward.giftProduct} critical={Boolean(error)}>
-          {CURRENCY} {formatAmount(tier.minimumAmount)} → {reward.summary}
-        </TierBadge>
-      </BoxHeader>
+        title={
+          <Text as="h3" variant="bodyMd" fontWeight="medium">
+            Tier #{number}
+          </Text>
+        }
+        badge={
+          <TierBadge info={reward.giftProduct} critical={Boolean(error)}>
+            {CURRENCY} {formatAmount(tier.minimumAmount)} → {reward.summary}
+          </TierBadge>
+        }
+      />
 
       <Collapsible id={contentId} open={open} onAnimationEnd={() => open && onOpened()}>
         <Box background="bg-surface" padding="300">
