@@ -25,7 +25,7 @@ const toTitle = (slug) =>
 
 function Overview() {
   return (
-    <Page title="Candy Rack Prototypes" subtitle="Interactive prototypes built with Shopify Polaris">
+    <Page title="Candy Rack Prototypes">
       <BlockStack gap="400">
         {features.length === 0 && (
           <Card>
