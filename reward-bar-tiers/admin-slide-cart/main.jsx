@@ -32,8 +32,10 @@ import { RewardBarCard } from './RewardBarCard.jsx';
 //   0–1039     one column, the admin navigation disappears below 768 (Polaris Frame does that)
 // 1280 isn't a Polaris breakpoint (Polaris xl is 1440), so it's checked with a custom hook.
 const WIDE_LAYOUT_QUERY = '(min-width: 1280px)';
-const WIDE_COLUMNS = '240px 1fr 390px';
-const TWO_COLUMNS = '1fr 390px';
+// minmax(0, 1fr) lets the settings column get narrower than its content (e.g. the markets table,
+// which then scrolls sideways) – a plain 1fr would stop at the content width and push the page wider.
+const WIDE_COLUMNS = '240px minmax(0, 1fr) 390px';
+const TWO_COLUMNS = 'minmax(0, 1fr) 390px';
 const APP_MAX_WIDTH = '1404px';
 
 // Heights of the empty placeholder cards, taken from Figma – replaced by real content later.
@@ -149,59 +151,62 @@ function SlideCartSettings() {
             titleMetadata={<Badge>Inactive</Badge>}
             secondaryActions={[{ content: 'Restore to defaults', onAction: restoreDefaults }]}
           >
-            <BlockStack gap="400">
-              {bannerErrors.length > 0 && (
-                <Banner
-                  tone="critical"
-                  title={
-                    bannerErrors.length === 1
-                      ? 'There is 1 error in these settings:'
-                      : `There are ${bannerErrors.length} errors in these settings:`
-                  }
-                >
-                  {/* Each error opens its tier – only one tier can be open, so the list is the way around. */}
-                  <List type="bullet">
-                    {bannerErrors.map((error) => (
-                      <List.Item key={error.message}>
-                        <Link monochrome onClick={() => focusTier(error.tierId, true)}>
-                          {error.message}
-                        </Link>
-                      </List.Item>
-                    ))}
-                  </List>
-                </Banner>
-              )}
-
-              {!isWide && (
-                // Cards go edge to edge below 490 px, the button keeps the page padding.
-                <Box paddingInline={{ xs: '400', sm: '0' }}>
-                  <SectionsMenu />
-                </Box>
-              )}
-
-              <InlineGrid
-                columns={isWide ? WIDE_COLUMNS : { xs: 1, lg: TWO_COLUMNS }}
-                gap="400"
-                alignItems="start"
-              >
-                {isWide && (
-                  <Card padding="0">
-                    <Box minHeight={NAV_CARD_HEIGHT} />
-                  </Card>
+            {/* Polaris Page adds no space below the content, the Shopify admin has 20 px under the last card. */}
+            <Box paddingBlockEnd="500">
+              <BlockStack gap="400">
+                {bannerErrors.length > 0 && (
+                  <Banner
+                    tone="critical"
+                    title={
+                      bannerErrors.length === 1
+                        ? 'There is 1 error in these settings:'
+                        : `There are ${bannerErrors.length} errors in these settings:`
+                    }
+                  >
+                    {/* Each error opens its tier – only one tier can be open, so the list is the way around. */}
+                    <List type="bullet">
+                      {bannerErrors.map((error) => (
+                        <List.Item key={error.message}>
+                          <Link monochrome onClick={() => focusTier(error.tierId, true)}>
+                            {error.message}
+                          </Link>
+                        </List.Item>
+                      ))}
+                    </List>
+                  </Banner>
                 )}
 
-                <RewardBarCard
-                  settings={settings}
-                  onChange={setSettings}
-                  errors={fieldErrors}
-                  focusRequest={focusRequest}
-                />
+                {!isWide && (
+                  // Cards go edge to edge below 490 px, the button keeps the page padding.
+                  <Box paddingInline={{ xs: '400', sm: '0' }}>
+                    <SectionsMenu />
+                  </Box>
+                )}
 
-                <Card padding="0">
-                  <Box minHeight={PREVIEW_CARD_HEIGHT} />
-                </Card>
-              </InlineGrid>
-            </BlockStack>
+                <InlineGrid
+                  columns={isWide ? WIDE_COLUMNS : { xs: 1, lg: TWO_COLUMNS }}
+                  gap="400"
+                  alignItems="start"
+                >
+                  {isWide && (
+                    <Card padding="0">
+                      <Box minHeight={NAV_CARD_HEIGHT} />
+                    </Card>
+                  )}
+
+                  <RewardBarCard
+                    settings={settings}
+                    onChange={setSettings}
+                    errors={fieldErrors}
+                    focusRequest={focusRequest}
+                  />
+
+                  <Card padding="0">
+                    <Box minHeight={PREVIEW_CARD_HEIGHT} />
+                  </Card>
+                </InlineGrid>
+              </BlockStack>
+            </Box>
           </Page>
 
           {/* APP BRIDGE: toast (shopify.toast.show) – the Shopify admin shows it at the bottom of the page. */}

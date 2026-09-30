@@ -7,79 +7,27 @@ import {
   Button,
   Card,
   Collapsible,
-  Icon,
+  Divider,
   InlineStack,
   Popover,
   Select,
   Text,
   TextField,
-  Tooltip,
 } from '@shopify/polaris';
-import {
-  ChevronDownIcon,
-  ChevronUpIcon,
-  DeleteIcon,
-  InfoIcon,
-  MenuHorizontalIcon,
-  PlusCircleIcon,
-} from '@shopify/polaris-icons';
+import { ChevronDownIcon, ChevronUpIcon, DeleteIcon, MenuHorizontalIcon, PlusCircleIcon } from '@shopify/polaris-icons';
 import { BoxButton } from '../../shared/custom/BoxButton.jsx';
 import { RichTextField } from '../../shared/custom/RichTextField.jsx';
 import { revealElement } from '../../shared/revealElement.js';
 import { CURRENCY, REWARD_TYPES, formatAmount, parseAmount } from '../settings.js';
+import { BoxHeader, IconButtonSlot, TierBadge, toAmountInput } from './common.jsx';
+import { MarketsSection } from './MarketsSection.jsx';
 
 const AMOUNT_STEP = 50;
 const MAX_TIERS = 3;
 
 const REWARD_TYPE_OPTIONS = Object.entries(REWARD_TYPES).map(([value, { label }]) => ({ value, label }));
 
-// The amount field takes numbers only: digits, commas as thousands separators and one decimal point,
-// max 2 decimals. Anything else typed or pasted is left out.
-const toAmountInput = (value) => {
-  const [whole, ...rest] = value.replace(/[^\d.,]/g, '').split('.');
-  return rest.length > 0 ? `${whole}.${rest.join('').replace(/,/g, '').slice(0, 2)}` : whole;
-};
-
 const newTierId = () => `tier-${Date.now()}`;
-
-// CUSTOM: Polaris Badge puts its icon before the text, the design has the info icon after it.
-// Built to look like the Polaris Badge (same tokens as its default and critical tone),
-// the icon shows the gift product in a tooltip.
-function TierBadge({ children, info, critical }) {
-  const tone = critical ? 'critical' : 'subdued';
-  return (
-    <Box
-      background={critical ? 'bg-fill-critical-secondary' : 'bg-fill-transparent-secondary'}
-      borderRadius="200"
-      paddingInline="200"
-      paddingBlock={info ? '0' : '050'}
-    >
-      <InlineStack gap="100" blockAlign="center" wrap={false}>
-        <Text as="span" variant="bodySm" fontWeight="medium" tone={tone}>
-          {children}
-        </Text>
-        {info && (
-          <Tooltip content={info}>
-            <Text as="span" tone={tone}>
-              <Icon source={InfoIcon} tone="inherit" accessibilityLabel={info} />
-            </Text>
-          </Tooltip>
-        )}
-      </InlineStack>
-    </Box>
-  );
-}
-
-// Polaris tertiary icon buttons have a -4px margin, so they bleed into the space around them.
-// The design places them exactly (28 × 28, 4px apart), so each one gets the 4px back.
-// InlineStack keeps the button out of a text line, which would add a few pixels below it.
-function IconButtonSlot({ children }) {
-  return (
-    <Box padding="100">
-      <InlineStack>{children}</InlineStack>
-    </Box>
-  );
-}
 
 function TierMenu({ canDelete, onDelete }) {
   const [open, setOpen] = useState(false);
@@ -114,45 +62,38 @@ function Tier({ tier, number, open, error, canDelete, onToggle, onOpened, onChan
   const reward = REWARD_TYPES[tier.rewardType];
   const contentId = `${tier.id}-settings`;
 
-  // Clicks on the buttons (and inside the menu popover, which React bubbles up here) keep their own action.
-  const onHeaderClick = (event) => {
-    if (!event.target.closest('button')) onToggle();
-  };
-
   return (
     <Box id={tier.id} borderWidth="025" borderColor="border" borderRadius="200" overflowX="hidden" overflowY="hidden">
-      {/* CUSTOM: the whole header toggles the tier – Polaris Box can't be clicked.
-          Keyboard and screen reader users use the chevron button. */}
-      <div onClick={onHeaderClick} style={{ cursor: 'pointer' }}>
-        <Box background="bg-surface-hover" padding="300">
-          <InlineStack align="space-between" blockAlign="center" gap="200" wrap={false}>
-            <InlineStack gap="200" blockAlign="center">
-              <Text as="h3" variant="bodyMd" fontWeight="medium">
-                Tier #{number}
-              </Text>
-              <TierBadge info={reward.giftProduct} critical={Boolean(error)}>
-                Spend {CURRENCY} {formatAmount(tier.minimumAmount)} → {reward.summary}
-              </TierBadge>
-            </InlineStack>
-
-            <InlineStack gap="100" wrap={false}>
-              <IconButtonSlot>
-                <TierMenu canDelete={canDelete} onDelete={onDelete} />
-              </IconButtonSlot>
-              <IconButtonSlot>
-                <Button
-                  variant="tertiary"
-                  icon={open ? ChevronUpIcon : ChevronDownIcon}
-                  accessibilityLabel={open ? `Collapse tier ${number}` : `Expand tier ${number}`}
-                  ariaExpanded={open}
-                  ariaControls={contentId}
-                  onClick={onToggle}
-                />
-              </IconButtonSlot>
-            </InlineStack>
-          </InlineStack>
-        </Box>
-      </div>
+      <BoxHeader
+        onToggle={onToggle}
+        actions={
+          <>
+            <IconButtonSlot>
+              <TierMenu canDelete={canDelete} onDelete={onDelete} />
+            </IconButtonSlot>
+            <IconButtonSlot>
+              <Button
+                variant="tertiary"
+                icon={open ? ChevronUpIcon : ChevronDownIcon}
+                accessibilityLabel={open ? `Collapse tier ${number}` : `Expand tier ${number}`}
+                ariaExpanded={open}
+                ariaControls={contentId}
+                onClick={onToggle}
+              />
+            </IconButtonSlot>
+          </>
+        }
+        title={
+          <Text as="h3" variant="bodyMd" fontWeight="medium">
+            Tier #{number}
+          </Text>
+        }
+        badge={
+          <TierBadge info={reward.giftProduct} critical={Boolean(error)}>
+            {CURRENCY} {formatAmount(tier.minimumAmount)} → {reward.summary}
+          </TierBadge>
+        }
+      />
 
       <Collapsible id={contentId} open={open} onAnimationEnd={() => open && onOpened()}>
         <Box background="bg-surface" padding="300">
@@ -190,7 +131,7 @@ function showTier({ id, focusField }) {
   if (focusField) element?.querySelector('input')?.focus({ preventScroll: true });
 }
 
-// Reward bar section of the slide cart settings: on/off and up to 3 reward tiers.
+// Reward bar section of the slide cart settings: on/off, up to 3 reward tiers and their amounts in markets.
 // Only one tier is open at a time, a new tier opens right away.
 //   errors        – validation errors to show (see validateTiers in settings.js), empty when there are none
 //   focusRequest  – { tierId, key, focusField }: open that tier and scroll to it (and put the cursor
@@ -252,41 +193,48 @@ export function RewardBarCard({ settings, onChange, errors = [], focusRequest })
   const deleteTier = (id) => setTiers(tiers.filter((tier) => tier.id !== id));
 
   return (
-    <Card>
-      <BlockStack gap="400">
-        <InlineStack align="space-between" blockAlign="start">
-          <InlineStack gap="200" blockAlign="center">
-            <Text as="h2" variant="headingSm">
-              Reward bar
-            </Text>
-            {enabled ? <Badge tone="success">On</Badge> : <Badge>Off</Badge>}
+    // Two sections split by a full-width divider, so the card has no padding of its own.
+    <Card padding="0">
+      <Box padding="400">
+        <BlockStack gap="400">
+          <InlineStack align="space-between" blockAlign="start">
+            <InlineStack gap="200" blockAlign="center">
+              <Text as="h2" variant="headingSm">
+                Reward bar
+              </Text>
+              {enabled ? <Badge tone="success">On</Badge> : <Badge>Off</Badge>}
+            </InlineStack>
+            <Button onClick={() => onChange({ ...settings, enabled: !enabled })}>
+              {enabled ? 'Turn off' : 'Turn on'}
+            </Button>
           </InlineStack>
-          <Button onClick={() => onChange({ ...settings, enabled: !enabled })}>
-            {enabled ? 'Turn off' : 'Turn on'}
-          </Button>
-        </InlineStack>
 
-        {tiers.map((tier, index) => (
-          <Tier
-            key={tier.id}
-            tier={tier}
-            number={index + 1}
-            open={openTierId === tier.id}
-            error={fieldError(tier.id)}
-            canDelete={tiers.length > 1}
-            onToggle={() => setOpenTierId(openTierId === tier.id ? null : tier.id)}
-            onOpened={() => onTierOpened(tier.id)}
-            onChange={(patch) => updateTier(tier.id, patch)}
-            onDelete={() => deleteTier(tier.id)}
-          />
-        ))}
+          {tiers.map((tier, index) => (
+            <Tier
+              key={tier.id}
+              tier={tier}
+              number={index + 1}
+              open={openTierId === tier.id}
+              error={fieldError(tier.id)}
+              canDelete={tiers.length > 1}
+              onToggle={() => setOpenTierId(openTierId === tier.id ? null : tier.id)}
+              onOpened={() => onTierOpened(tier.id)}
+              onChange={(patch) => updateTier(tier.id, patch)}
+              onDelete={() => deleteTier(tier.id)}
+            />
+          ))}
 
-        {tiers.length < MAX_TIERS && (
-          <BoxButton icon={PlusCircleIcon} onClick={addTier}>
-            Add tier
-          </BoxButton>
-        )}
-      </BlockStack>
+          {tiers.length < MAX_TIERS && (
+            <BoxButton icon={PlusCircleIcon} onClick={addTier}>
+              Add tier
+            </BoxButton>
+          )}
+        </BlockStack>
+      </Box>
+      <Divider />
+      <Box padding="400">
+        <MarketsSection settings={settings} onChange={onChange} />
+      </Box>
     </Card>
   );
 }
