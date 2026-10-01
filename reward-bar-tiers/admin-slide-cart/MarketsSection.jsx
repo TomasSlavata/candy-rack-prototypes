@@ -14,7 +14,7 @@ import {
   Text,
   TextField,
 } from '@shopify/polaris';
-import { ChevronDownIcon, ChevronUpIcon, SearchIcon } from '@shopify/polaris-icons';
+import { CaretDownIcon, ChevronDownIcon, ChevronUpIcon, SearchIcon } from '@shopify/polaris-icons';
 import { usePersistentState } from '../../shared/usePersistentState.js';
 import { MARKETS, REWARD_TYPES, isDefaultMarket, isMarketCustomized, marketTiers } from '../settings.js';
 import { BoxHeader, IconButtonSlot } from './common.jsx';
@@ -63,8 +63,8 @@ function SetupCell({ market, entries, customized, open, onToggle, onClose, onEdi
         >
           <InlineStack gap="100" align="start" blockAlign="center" wrap={false}>
             {badge}
-            <span className="cr-SetupCell__Chevron">
-              <Icon source={ChevronDownIcon} tone="subdued" />
+            <span className="cr-SetupCell__Caret">
+              <Icon source={CaretDownIcon} tone="base" />
             </span>
           </InlineStack>
         </button>
@@ -206,7 +206,9 @@ export function MarketsSection({ settings, onChange }) {
         />
 
         <Collapsible id={CONTENT_ID} open={open}>
-          <Box background="bg-surface">
+          {/* The line under the header sits on the content, so it shows only when the box is open
+              (closed, it would double the box's bottom border) and slides with the content. */}
+          <Box background="bg-surface" borderBlockStartWidth="025" borderColor="border">
             {/* The border separates the search from the table heading (Figma), Polaris draws only the one below it. */}
             {MARKETS.length >= SEARCH_MIN_MARKETS && (
               <Box padding="300" borderBlockEndWidth="025" borderColor="border">

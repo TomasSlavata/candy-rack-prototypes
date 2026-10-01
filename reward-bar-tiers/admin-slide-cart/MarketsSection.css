@@ -27,15 +27,15 @@
   outline-offset: calc(-1 * var(--p-border-width-050));
 }
 
-/* The chevron shows while the row is hovered or the cell has keyboard focus.
-   With the popover open the cell stays highlighted, the chevron only shows on hover (Figma 11.7). */
-.cr-SetupCell__Chevron {
+/* The caret shows while the row is hovered or the cell has keyboard focus.
+   With the popover open the cell stays highlighted, the caret only shows on hover (Figma 11.7). */
+.cr-SetupCell__Caret {
   display: flex;
   visibility: hidden;
 }
 
-tr:hover .cr-SetupCell__Chevron,
-.cr-SetupCell:focus-visible .cr-SetupCell__Chevron {
+tr:hover .cr-SetupCell__Caret,
+.cr-SetupCell:focus-visible .cr-SetupCell__Caret {
   visibility: visible;
 }
 
