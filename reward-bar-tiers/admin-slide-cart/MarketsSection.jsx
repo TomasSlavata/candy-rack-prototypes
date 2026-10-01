@@ -206,7 +206,9 @@ export function MarketsSection({ settings, onChange }) {
         />
 
         <Collapsible id={CONTENT_ID} open={open}>
-          <Box background="bg-surface">
+          {/* The line under the header sits on the content, so it shows only when the box is open
+              (closed, it would double the box's bottom border) and slides with the content. */}
+          <Box background="bg-surface" borderBlockStartWidth="025" borderColor="border">
             {/* The border separates the search from the table heading (Figma), Polaris draws only the one below it. */}
             {MARKETS.length >= SEARCH_MIN_MARKETS && (
               <Box padding="300" borderBlockEndWidth="025" borderColor="border">

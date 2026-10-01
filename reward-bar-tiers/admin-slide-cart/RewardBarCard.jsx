@@ -96,7 +96,8 @@ function Tier({ tier, number, open, error, canDelete, onToggle, onOpened, onChan
       />
 
       <Collapsible id={contentId} open={open} onAnimationEnd={() => open && onOpened()}>
-        <Box background="bg-surface" padding="300">
+        {/* The line under the header – on the content, like in MarketsSection. */}
+        <Box background="bg-surface" padding="300" borderBlockStartWidth="025" borderColor="border">
           <BlockStack gap="300">
             <Select
               label="Reward type"
