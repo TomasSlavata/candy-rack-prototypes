@@ -82,33 +82,43 @@ export function validateTiers(tiers) {
 }
 
 // ——— Markets ———
-// The store's Shopify markets (placeholder data). The first one uses the store currency (USD),
-// in the others each tier's amount is converted with Shopify's exchange rate – unless the merchant
-// sets it manually or hides the tier there. Rates are rough placeholders.
+// The store's Shopify markets (placeholder data), in alphabetical order like the Shopify admin lists them.
+// Shopify has no primary market – the tier amounts are in the store currency, and markets in that
+// currency use them as they are (Default). In the others each tier's amount is converted with Shopify's
+// exchange rate (Converted). In any market the merchant can set amounts manually or hide tiers (Customized).
+// Rates are rough placeholders.
 export const MARKETS = [
-  { id: 'us', name: 'United States', currency: 'USD', rate: 1, primary: true },
   { id: 'at', name: 'Austria', currency: 'EUR', rate: 0.86 },
   { id: 'cz', name: 'Czechia', currency: 'CZK', rate: 21.5 },
+  { id: 'ec', name: 'Ecuador', currency: 'USD', rate: 1 },
+  { id: 'sv', name: 'El Salvador', currency: 'USD', rate: 1 },
   { id: 'fr', name: 'France', currency: 'EUR', rate: 0.86 },
   { id: 'de', name: 'Germany', currency: 'EUR', rate: 0.86 },
   { id: 'hu', name: 'Hungary', currency: 'HUF', rate: 345 },
   { id: 'pl', name: 'Poland', currency: 'PLN', rate: 3.7 },
+  { id: 'pr', name: 'Puerto Rico', currency: 'USD', rate: 1 },
   { id: 'ro', name: 'Romania', currency: 'RON', rate: 4.35 },
   { id: 'sk', name: 'Slovakia', currency: 'EUR', rate: 0.86 },
   { id: 'es', name: 'Spain', currency: 'EUR', rate: 0.86 },
   { id: 'gb', name: 'United Kingdom', currency: 'GBP', rate: 0.75 },
+  { id: 'us', name: 'United States', currency: 'USD', rate: 1 },
 ];
 
+// A market in the store currency – its amounts are the tiers' own, nothing to convert.
+export const isDefaultMarket = (market) => market.currency === CURRENCY;
+
 // What the merchant changed in one market (stored in settings.markets[marketId]):
-//   amounts      – { tierId: "50.00" } amounts typed for tiers, a blank amount means "converted"
-//                  (not in the store currency market – its amounts are the tiers' own)
+//   amounts      – { tierId: "50.00" } amounts typed for tiers, a blank amount means the tier's own
+//                  amount (Default market) or the converted one (other markets)
 //   hiddenTiers  – ids of tiers that don't show in this market
 export const EMPTY_MARKET = { amounts: {}, hiddenTiers: [] };
 
 export const marketLabel = (market) => `${market.name} (${market.currency})`;
 
 // A tier's amount converted to the market currency, rounded to whole units like Shopify's price rounding.
+// A Default market takes the tier's amount as it is.
 export function convertedAmount(tier, market) {
+  if (isDefaultMarket(market)) return formatAmount(tier.minimumAmount);
   const amount = parseAmount(tier.minimumAmount);
   return amount === null ? '' : formatAmount(String(Math.round(amount * market.rate)));
 }
@@ -135,8 +145,8 @@ export function marketTiers(market, tiers, changes) {
   const { amounts, hiddenTiers } = cleanMarket(changes, tiers);
   const entries = tiers.map((tier) => ({
     tier,
-    amount: market.primary ? formatAmount(tier.minimumAmount) : (amounts[tier.id] ?? convertedAmount(tier, market)),
-    custom: !market.primary && tier.id in amounts,
+    amount: amounts[tier.id] ?? convertedAmount(tier, market),
+    custom: tier.id in amounts,
     hidden: hiddenTiers.includes(tier.id),
   }));
   const value = (entry) => (entry.hidden ? 1 : 0) * 1e15 + (parseAmount(entry.amount) ?? 1e14);
@@ -145,9 +155,7 @@ export function marketTiers(market, tiers, changes) {
 
 // Checks the amounts typed in a market before they're applied – same rule as for the tiers themselves:
 // shown tiers can't share an amount. Returns { tierId: error text }.
-// The store currency market takes its amounts from the tiers, which are checked on their own.
 export function validateMarket(market, tiers, changes) {
-  if (market.primary) return {};
   const shown = marketTiers(market, tiers, changes).filter((entry) => !entry.hidden);
   const errors = {};
   for (const entry of shown) {

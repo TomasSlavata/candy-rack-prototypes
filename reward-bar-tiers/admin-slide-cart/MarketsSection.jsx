@@ -16,12 +16,15 @@ import {
 } from '@shopify/polaris';
 import { ChevronDownIcon, ChevronUpIcon, SearchIcon } from '@shopify/polaris-icons';
 import { usePersistentState } from '../../shared/usePersistentState.js';
-import { MARKETS, REWARD_TYPES, isMarketCustomized, marketTiers } from '../settings.js';
+import { MARKETS, REWARD_TYPES, isDefaultMarket, isMarketCustomized, marketTiers } from '../settings.js';
 import { BoxHeader, IconButtonSlot } from './common.jsx';
 import { MarketModal } from './MarketModal.jsx';
 import './MarketsSection.css';
 
 const CONTENT_ID = 'reward-bar-markets';
+// A shorter list is quicker to scan than to search. Counted from all markets, not the found ones,
+// so the search doesn't disappear while typing.
+const SEARCH_MIN_MARKETS = 10;
 
 // CUSTOM: the Setup cell is a button that opens a popover with the market's tiers – taken over
 // from the Shopify admin, which does this with its own component too. Polaris IndexTable only makes
@@ -34,10 +37,11 @@ function SetupCell({ market, entries, customized, open, onToggle, onClose, onEdi
   const shown = entries.filter((entry) => !entry.hidden);
   const stop = (event) => event.stopPropagation();
 
-  const badge = market.primary ? (
+  // Customized wins in any market – the merchant changed amounts or hid tiers there.
+  const badge = customized ? (
+    <Badge tone="info">Customized</Badge>
+  ) : isDefaultMarket(market) ? (
     <Badge>Default</Badge>
-  ) : customized ? (
-    <Badge tone="info">Custom</Badge>
   ) : (
     <Badge>Converted</Badge>
   );
@@ -171,8 +175,8 @@ export function MarketsSection({ settings, onChange }) {
         </Text>
         {!bannerDismissed && (
           <Banner tone="info" onDismiss={() => setBannerDismissed(true)}>
-            Each market's amount is converted automatically from your store currency using Shopify's exchange rates,
-            unless you set it manually.
+            Markets in your store currency use the tier amounts. In other markets, amounts are converted using
+            Shopify's exchange rates. You can set them manually in any market.
           </Banner>
         )}
       </BlockStack>
@@ -192,9 +196,10 @@ export function MarketsSection({ settings, onChange }) {
               />
             </IconButtonSlot>
           }
+          // The count, not a second "Markets" heading right under the section's one.
           title={
             <Text as="h4" variant="bodyMd" fontWeight="medium">
-              Markets
+              {`${MARKETS.length} markets`}
             </Text>
           }
           badge={customizedCount > 0 && <Badge tone="info">{`${customizedCount} customized`}</Badge>}
@@ -203,19 +208,21 @@ export function MarketsSection({ settings, onChange }) {
         <Collapsible id={CONTENT_ID} open={open}>
           <Box background="bg-surface">
             {/* The border separates the search from the table heading (Figma), Polaris draws only the one below it. */}
-            <Box padding="300" borderBlockEndWidth="025" borderColor="border">
-              <TextField
-                label="Search market"
-                labelHidden
-                placeholder="Search market"
-                prefix={<Icon source={SearchIcon} />}
-                autoComplete="off"
-                clearButton
-                value={query}
-                onChange={setQuery}
-                onClearButtonClick={() => setQuery('')}
-              />
-            </Box>
+            {MARKETS.length >= SEARCH_MIN_MARKETS && (
+              <Box padding="300" borderBlockEndWidth="025" borderColor="border">
+                <TextField
+                  label="Search market"
+                  labelHidden
+                  placeholder="Search market"
+                  prefix={<Icon source={SearchIcon} />}
+                  autoComplete="off"
+                  clearButton
+                  value={query}
+                  onChange={setQuery}
+                  onClearButtonClick={() => setQuery('')}
+                />
+              </Box>
+            )}
             <IndexTable
               resourceName={{ singular: 'market', plural: 'markets' }}
               itemCount={found.length}
