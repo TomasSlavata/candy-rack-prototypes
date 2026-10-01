@@ -22,6 +22,9 @@ import { MarketModal } from './MarketModal.jsx';
 import './MarketsSection.css';
 
 const CONTENT_ID = 'reward-bar-markets';
+// A shorter list is quicker to scan than to search. Counted from all markets, not the found ones,
+// so the search doesn't disappear while typing.
+const SEARCH_MIN_MARKETS = 10;
 
 // CUSTOM: the Setup cell is a button that opens a popover with the market's tiers – taken over
 // from the Shopify admin, which does this with its own component too. Polaris IndexTable only makes
@@ -205,19 +208,21 @@ export function MarketsSection({ settings, onChange }) {
         <Collapsible id={CONTENT_ID} open={open}>
           <Box background="bg-surface">
             {/* The border separates the search from the table heading (Figma), Polaris draws only the one below it. */}
-            <Box padding="300" borderBlockEndWidth="025" borderColor="border">
-              <TextField
-                label="Search market"
-                labelHidden
-                placeholder="Search market"
-                prefix={<Icon source={SearchIcon} />}
-                autoComplete="off"
-                clearButton
-                value={query}
-                onChange={setQuery}
-                onClearButtonClick={() => setQuery('')}
-              />
-            </Box>
+            {MARKETS.length >= SEARCH_MIN_MARKETS && (
+              <Box padding="300" borderBlockEndWidth="025" borderColor="border">
+                <TextField
+                  label="Search market"
+                  labelHidden
+                  placeholder="Search market"
+                  prefix={<Icon source={SearchIcon} />}
+                  autoComplete="off"
+                  clearButton
+                  value={query}
+                  onChange={setQuery}
+                  onClearButtonClick={() => setQuery('')}
+                />
+              </Box>
+            )}
             <IndexTable
               resourceName={{ singular: 'market', plural: 'markets' }}
               itemCount={found.length}
