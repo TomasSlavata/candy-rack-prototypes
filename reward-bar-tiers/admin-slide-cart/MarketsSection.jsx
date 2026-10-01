@@ -16,7 +16,7 @@ import {
 } from '@shopify/polaris';
 import { ChevronDownIcon, ChevronUpIcon, SearchIcon } from '@shopify/polaris-icons';
 import { usePersistentState } from '../../shared/usePersistentState.js';
-import { MARKETS, REWARD_TYPES, isMarketCustomized, marketTiers } from '../settings.js';
+import { MARKETS, REWARD_TYPES, isDefaultMarket, isMarketCustomized, marketTiers } from '../settings.js';
 import { BoxHeader, IconButtonSlot } from './common.jsx';
 import { MarketModal } from './MarketModal.jsx';
 import './MarketsSection.css';
@@ -34,10 +34,11 @@ function SetupCell({ market, entries, customized, open, onToggle, onClose, onEdi
   const shown = entries.filter((entry) => !entry.hidden);
   const stop = (event) => event.stopPropagation();
 
-  const badge = market.primary ? (
-    <Badge>Default</Badge>
-  ) : customized ? (
+  // Custom wins in any market – the merchant changed amounts or hid tiers there.
+  const badge = customized ? (
     <Badge tone="info">Custom</Badge>
+  ) : isDefaultMarket(market) ? (
+    <Badge>Default</Badge>
   ) : (
     <Badge>Converted</Badge>
   );

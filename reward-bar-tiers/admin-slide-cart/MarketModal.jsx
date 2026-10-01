@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Banner, BlockStack, Box, Button, InlineStack, Modal, Text, TextField, Tooltip } from '@shopify/polaris';
+import { BlockStack, Box, Button, InlineStack, Modal, Text, TextField, Tooltip } from '@shopify/polaris';
 import { HideIcon, ViewIcon } from '@shopify/polaris-icons';
 import {
   EMPTY_MARKET,
@@ -14,8 +14,8 @@ import {
 } from '../settings.js';
 import { TierBadge, toAmountInput } from './common.jsx';
 
-// One tier's row. In the store currency market (`fixed`) the amount is the tier's own – read only here.
-function TierAmount({ entry, value, number, currency, fixed, placeholder, error, onChange, onBlur, onToggleHidden }) {
+// One tier's row.
+function TierAmount({ entry, value, number, currency, placeholder, error, onChange, onBlur, onToggleHidden }) {
   const { tier, amount, hidden } = entry;
   const reward = REWARD_TYPES[tier.rewardType];
   const toggleLabel = hidden ? 'Show tier' : 'Hide tier';
@@ -61,8 +61,7 @@ function TierAmount({ entry, value, number, currency, fixed, placeholder, error,
         autoComplete="off"
         placeholder={placeholder}
         disabled={hidden}
-        readOnly={fixed && !hidden}
-        value={fixed ? amount : value}
+        value={value}
         error={error}
         onChange={onChange}
         onBlur={onBlur}
@@ -72,8 +71,8 @@ function TierAmount({ entry, value, number, currency, fixed, placeholder, error,
 }
 
 // APP BRIDGE: modal – in production a Shopify admin modal (ui-modal), here the Polaris Modal.
-// Amounts of all tiers in one market. A blank field uses the converted amount (shown as the placeholder).
-// In the store currency market tiers can only be hidden, the amounts are the tiers' own.
+// Amounts of all tiers in one market. A blank field uses the tier's own amount (Default market)
+// or the converted one (other markets) – shown as the placeholder.
 // Save hands the changes back to the page – they're saved with its save bar.
 // Tiers keep the market's order from when the modal opened, so they don't jump while typing –
 // the new order (by amount, hidden last) shows the next time.
@@ -121,11 +120,6 @@ export function MarketModal({ market, tiers, changes, onApply, onClose }) {
     >
       <Modal.Section>
         <BlockStack gap="400">
-          {market.primary && (
-            <Banner tone="info">
-              Amounts in your store currency come from the tier settings. Here you can hide tiers in this market.
-            </Banner>
-          )}
           {entries.map((entry, index) => (
             <TierAmount
               key={entry.tier.id}
@@ -133,7 +127,6 @@ export function MarketModal({ market, tiers, changes, onApply, onClose }) {
               value={draft.amounts[entry.tier.id] ?? ''}
               number={index + 1}
               currency={market.currency}
-              fixed={market.primary}
               placeholder={convertedAmount(entry.tier, market)}
               error={errors[entry.tier.id]}
               onChange={(value) => setAmount(entry.tier.id, toAmountInput(value))}
