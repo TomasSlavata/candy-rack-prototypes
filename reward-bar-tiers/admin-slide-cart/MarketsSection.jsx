@@ -34,9 +34,9 @@ function SetupCell({ market, entries, customized, open, onToggle, onClose, onEdi
   const shown = entries.filter((entry) => !entry.hidden);
   const stop = (event) => event.stopPropagation();
 
-  // Custom wins in any market – the merchant changed amounts or hid tiers there.
+  // Customized wins in any market – the merchant changed amounts or hid tiers there.
   const badge = customized ? (
-    <Badge tone="info">Custom</Badge>
+    <Badge tone="info">Customized</Badge>
   ) : isDefaultMarket(market) ? (
     <Badge>Default</Badge>
   ) : (
@@ -172,8 +172,8 @@ export function MarketsSection({ settings, onChange }) {
         </Text>
         {!bannerDismissed && (
           <Banner tone="info" onDismiss={() => setBannerDismissed(true)}>
-            Each market's amount is converted automatically from your store currency using Shopify's exchange rates,
-            unless you set it manually.
+            Markets in your store currency use the tier amounts. In other markets, amounts are converted using
+            Shopify's exchange rates. You can set them manually in any market.
           </Banner>
         )}
       </BlockStack>
@@ -193,9 +193,10 @@ export function MarketsSection({ settings, onChange }) {
               />
             </IconButtonSlot>
           }
+          // The count, not a second "Markets" heading right under the section's one.
           title={
             <Text as="h4" variant="bodyMd" fontWeight="medium">
-              Markets
+              {`${MARKETS.length} markets`}
             </Text>
           }
           badge={customizedCount > 0 && <Badge tone="info">{`${customizedCount} customized`}</Badge>}

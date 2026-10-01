@@ -85,7 +85,7 @@ export function validateTiers(tiers) {
 // The store's Shopify markets (placeholder data), in alphabetical order like the Shopify admin lists them.
 // Shopify has no primary market – the tier amounts are in the store currency, and markets in that
 // currency use them as they are (Default). In the others each tier's amount is converted with Shopify's
-// exchange rate (Converted). In any market the merchant can set amounts manually or hide tiers (Custom).
+// exchange rate (Converted). In any market the merchant can set amounts manually or hide tiers (Customized).
 // Rates are rough placeholders.
 export const MARKETS = [
   { id: 'at', name: 'Austria', currency: 'EUR', rate: 0.86 },
