@@ -14,7 +14,7 @@ import {
   Text,
   TextField,
 } from '@shopify/polaris';
-import { ChevronDownIcon, ChevronUpIcon, SearchIcon } from '@shopify/polaris-icons';
+import { CaretDownIcon, ChevronDownIcon, ChevronUpIcon, SearchIcon } from '@shopify/polaris-icons';
 import { usePersistentState } from '../../shared/usePersistentState.js';
 import { MARKETS, REWARD_TYPES, isDefaultMarket, isMarketCustomized, marketTiers } from '../settings.js';
 import { BoxHeader, IconButtonSlot } from './common.jsx';
@@ -63,8 +63,8 @@ function SetupCell({ market, entries, customized, open, onToggle, onClose, onEdi
         >
           <InlineStack gap="100" align="start" blockAlign="center" wrap={false}>
             {badge}
-            <span className="cr-SetupCell__Chevron">
-              <Icon source={ChevronDownIcon} tone="subdued" />
+            <span className="cr-SetupCell__Caret">
+              <Icon source={CaretDownIcon} tone="base" />
             </span>
           </InlineStack>
         </button>
