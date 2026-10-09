@@ -12,11 +12,18 @@
   --sf-color-bg-muted: #f8f8f8;
   --sf-color-text: #282a2c;
   --sf-color-text-muted: rgba(40, 42, 44, 0.7);
+  --sf-color-text-disabled: rgba(40, 42, 44, 0.4);
   --sf-color-icon: rgba(40, 42, 44, 0.7);
+  --sf-color-icon-hover: #282a2c; /* also active */
   --sf-color-icon-disabled: rgba(40, 42, 44, 0.2);
   --sf-color-border: rgba(40, 42, 44, 0.13);
   --sf-color-input-border: rgba(40, 42, 44, 0.4);
+  --sf-color-input-border-active: #282a2c;
+  --sf-color-stepper-hover: rgba(40, 42, 44, 0.05);
+  --sf-color-stepper-active: rgba(40, 42, 44, 0.13);
   --sf-color-primary: #282a2c;
+  --sf-color-primary-hover: #4a4e52; /* also active */
+  --sf-color-primary-disabled: rgba(74, 78, 82, 0.3);
   --sf-color-on-primary: #ffffff;
   --sf-color-overlay: rgba(0, 0, 0, 0.4);
 
@@ -26,6 +33,7 @@
 
   /* Spacing */
   --sf-space-px: 1px;
+  --sf-space-0-5: 2px;
   --sf-space-1: 4px;
   --sf-space-1-5: 6px;
   --sf-space-2: 8px;
@@ -33,6 +41,9 @@
   --sf-space-4: 16px;
   --sf-space-5: 20px;
   --sf-space-6: 24px;
+  --sf-space-8: 32px;
+  --sf-space-10: 40px;
+  --sf-space-22: 88px;
 
   /* Typography: size / line height */
   --sf-font-size-sm: 12px;
@@ -53,6 +64,13 @@
   --sf-easing-open: cubic-bezier(0, 0, 0.3, 1);
   --sf-duration-close: 220ms;
   --sf-easing-close: ease-in;
+  /* Component state changes (hover, active, disabled…) */
+  --sf-duration-state: 150ms;
+  --sf-easing-state: ease;
+  --sf-duration-spin: 1s; /* one turn of a spinner */
+
+  /* Opacity */
+  --sf-opacity-removing: 0.4; /* a product card while it's being removed */
 
   /* Sizes */
   --sf-icon-size: 20px;

@@ -3,7 +3,7 @@ import { renderStorefront } from '../../shared/storefront/StorefrontShell.jsx';
 import { SlideCart, formatMoney } from '../../shared/storefront/SlideCart.jsx';
 import { useFeatureSettings } from '../../shared/usePersistentState.js';
 import herschelBackpack from '../../shared/storefront/images/herschel-backpack.png';
-import nikeStormFit from '../../shared/storefront/images/nike-storm-fit.png';
+import acgCanwellGlacier from '../../shared/storefront/images/acg-canwell-glacier.webp';
 import nikeZoomFly from '../../shared/storefront/images/nike-zoom-fly.png';
 import { CURRENCY, DEFAULT_SETTINGS } from '../settings.js';
 import { RewardsBar } from '../RewardsBar.jsx';
@@ -11,7 +11,7 @@ import './styles.css';
 
 // Products of the demo store (Figma storefront designs). The cart starts with two of them.
 const PRODUCTS = [
-  { id: 'storm-fit', title: 'Nike Storm Fit Swift', variant: 'XS / Black', price: 139.99, image: nikeStormFit },
+  { id: 'canwell-glacier', title: 'ACG Canwell Glacier', variant: 'M / Black', price: 139.99, image: acgCanwellGlacier },
   { id: 'zoom-fly', title: 'Nike Zoom Fly 5 Premium', variant: '44 / White', price: 79.99, image: nikeZoomFly },
   { id: 'backpack', title: 'Herschel Classic Backpack', variant: 'One Size / Black', price: 29.99, image: herschelBackpack },
 ];
