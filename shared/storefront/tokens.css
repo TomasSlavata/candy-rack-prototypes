@@ -58,7 +58,6 @@
   --sf-font-weight-semibold: 600;
 
   /* Motion */
-  --sf-duration: 300ms;
   /* Slide cart opening and closing (Figma "9.1 Opening Animation", "9.2 Closing Animation") */
   --sf-duration-open: 260ms;
   --sf-easing-open: cubic-bezier(0, 0, 0.3, 1);

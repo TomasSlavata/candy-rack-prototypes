@@ -212,6 +212,11 @@
   white-space: nowrap;
 }
 
+/* While its new quantity is being applied, the old price waits greyed out (like the total). */
+.sf-ProductCard__price--updating {
+  color: var(--sf-color-text-disabled);
+}
+
 /* Removing (Figma "13.2 Removing Product"): everything but the spinning delete button at 40%,
    and nothing in the card can be used any more. */
 .sf-ProductCard--removing {
@@ -390,7 +395,8 @@
   transition: opacity var(--sf-duration-state) var(--sf-easing-state);
 }
 
-.sf-SlideCart__total span {
+.sf-SlideCart__total span,
+.sf-ProductCard__price {
   transition: color var(--sf-duration-state) var(--sf-easing-state);
 }
 

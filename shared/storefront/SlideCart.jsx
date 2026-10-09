@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import closeIcon from './images/close.svg';
 import deleteIcon from './images/delete.svg';
 import plusIcon from './images/plus.svg';
@@ -10,6 +10,9 @@ const MAX_QUANTITY = 99;
 // How long removing a product takes – stands in for the request to Shopify (Figma "13.0 Microinteractions –
 // Removing Product" shows the states, not the time).
 const REMOVE_DELAY = 800;
+// Same for changing a quantity – no design for it, it works like removing (the old price waits greyed out).
+// Clicks within this time add up into one change, like a real cart that waits for the shopper to stop clicking.
+const QUANTITY_DELAY = 500;
 
 // A 20px icon in the color of its button (CSS mask), so hover and disabled states can recolor it.
 function Icon({ source }) {
@@ -30,6 +33,8 @@ function Icon({ source }) {
 // "Continue shopping" closes the cart.
 // Removing a product waits REMOVE_DELAY: meanwhile the delete button spins, the product is faded out
 // and the total greyed out – then the product goes and the count and total update.
+// Changing a quantity waits QUANTITY_DELAY: the stepper shows the new quantity right away, the product's
+// price and the total wait greyed out – then they (and the count and `top`) update.
 export function SlideCart({
   items,
   currency,
@@ -46,8 +51,30 @@ export function SlideCart({
   const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const formatPrice = (amount) => formatMoney(amount, currency);
   const [removingIds, setRemovingIds] = useState([]);
+  // Quantities chosen but not applied yet, by product id, and their timers.
+  const [pendingQuantities, setPendingQuantities] = useState({});
+  const quantityTimers = useRef({});
+  useEffect(() => () => Object.values(quantityTimers.current).forEach(clearTimeout), []);
+
+  const dropPending = (id) => {
+    clearTimeout(quantityTimers.current[id]);
+    delete quantityTimers.current[id];
+    setPendingQuantities(({ [id]: _dropped, ...others }) => others);
+  };
+
+  const changeQuantity = (id, quantity) => {
+    if (!onQuantityChange) return;
+    setPendingQuantities((current) => ({ ...current, [id]: quantity }));
+    clearTimeout(quantityTimers.current[id]);
+    quantityTimers.current[id] = setTimeout(() => {
+      onQuantityChange(id, quantity);
+      dropPending(id);
+    }, QUANTITY_DELAY);
+  };
+
   const remove = (id) => {
     if (!onRemove || removingIds.includes(id)) return;
+    dropPending(id);
     setRemovingIds((current) => [...current, id]);
     setTimeout(() => {
       onRemove(id);
@@ -55,6 +82,7 @@ export function SlideCart({
     }, REMOVE_DELAY);
   };
 
+  const updating = removingIds.length > 0 || Object.keys(pendingQuantities).length > 0;
   const className = `sf-SlideCart${fullHeight ? ' sf-SlideCart--fullHeight' : ''}`;
   const closeButton = (
     <button type="button" className="sf-SlideCart__iconButton" aria-label="Close cart" onClick={onClose}>
@@ -93,8 +121,9 @@ export function SlideCart({
               <ProductCard
                 item={item}
                 removing={removingIds.includes(item.id)}
+                pendingQuantity={pendingQuantities[item.id]}
                 formatPrice={formatPrice}
-                onQuantityChange={(quantity) => onQuantityChange?.(item.id, quantity)}
+                onQuantityChange={(quantity) => changeQuantity(item.id, quantity)}
                 onRemove={() => remove(item.id)}
               />
             </div>
@@ -111,7 +140,7 @@ export function SlideCart({
         )}
         <div className="sf-SlideCart__total">
           <span>{totalLabel}</span>
-          <span className={removingIds.length > 0 ? 'sf-SlideCart__totalValue--updating' : undefined}>
+          <span className={updating ? 'sf-SlideCart__totalValue--updating' : undefined}>
             {formatPrice(total)}
           </span>
         </div>
@@ -123,7 +152,8 @@ export function SlideCart({
   );
 }
 
-function ProductCard({ item, removing, formatPrice, onQuantityChange, onRemove }) {
+function ProductCard({ item, removing, pendingQuantity, formatPrice, onQuantityChange, onRemove }) {
+  const updating = pendingQuantity !== undefined;
   return (
     <div className={`sf-ProductCard${removing ? ' sf-ProductCard--removing' : ''}`} aria-busy={removing}>
       <img className="sf-ProductCard__thumbnail" src={item.image} alt="" />
@@ -145,8 +175,10 @@ function ProductCard({ item, removing, formatPrice, onQuantityChange, onRemove }
           )}
         </div>
         <div className="sf-ProductCard__bottom">
-          <QuantityStepper quantity={item.quantity} label={item.title} onChange={onQuantityChange} />
-          <p className="sf-ProductCard__price">{formatPrice(item.price * item.quantity)}</p>
+          <QuantityStepper quantity={pendingQuantity ?? item.quantity} label={item.title} onChange={onQuantityChange} />
+          <p className={`sf-ProductCard__price${updating ? ' sf-ProductCard__price--updating' : ''}`}>
+            {formatPrice(item.price * item.quantity)}
+          </p>
         </div>
       </div>
     </div>
