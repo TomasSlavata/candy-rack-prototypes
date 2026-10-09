@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import {
   ActionList,
   Badge,
+  Banner,
   BlockStack,
   Box,
   Button,
@@ -9,6 +10,7 @@ import {
   Collapsible,
   Divider,
   InlineStack,
+  Link,
   Popover,
   Select,
   Text,
@@ -18,7 +20,16 @@ import { ChevronDownIcon, ChevronUpIcon, DeleteIcon, MenuHorizontalIcon, PlusCir
 import { BoxButton } from '../../shared/custom/BoxButton.jsx';
 import { RichTextField } from '../../shared/custom/RichTextField.jsx';
 import { revealElement } from '../../shared/revealElement.js';
-import { CURRENCY, REWARD_TYPES, formatAmount, parseAmount } from '../settings.js';
+import { usePersistentState } from '../../shared/usePersistentState.js';
+import {
+  CURRENCY,
+  REWARD_TITLE_MAX_LENGTH,
+  REWARD_TYPES,
+  TEXT_MAX_LENGTH,
+  formatAmount,
+  parseAmount,
+} from '../settings.js';
+import { AppearanceSection } from './AppearanceSection.jsx';
 import { BoxHeader, IconButtonSlot, TierBadge, toAmountInput } from './common.jsx';
 import { MarketsSection } from './MarketsSection.jsx';
 
@@ -115,8 +126,9 @@ function Tier({ tier, number, open, error, canDelete, onToggle, onOpened, onChan
               onChange={(value) => onChange({ minimumAmount: toAmountInput(value) })}
               onBlur={() => onChange({ minimumAmount: formatAmount(tier.minimumAmount) })}
             />
-            <RichTextField label="Text before reward" value={reward.textBefore} variables />
-            <RichTextField label="Text after reward" value={reward.textAfter} />
+            <RichTextField label="Text before reward" value={reward.textBefore} maxLength={TEXT_MAX_LENGTH} variables />
+            <RichTextField label="Text after reward" value={reward.textAfter} maxLength={TEXT_MAX_LENGTH} />
+            <RichTextField label="Reward title" value={reward.rewardTitle} maxLength={REWARD_TITLE_MAX_LENGTH} />
           </BlockStack>
         </Box>
       </Collapsible>
@@ -132,13 +144,16 @@ function showTier({ id, focusField }) {
   if (focusField) element?.querySelector('input')?.focus({ preventScroll: true });
 }
 
-// Reward bar section of the slide cart settings: on/off, up to 3 reward tiers and their amounts in markets.
+// Rewards bar section of the slide cart settings: on/off, up to 3 reward tiers, their amounts in markets
+// and how the bar looks.
 // Only one tier is open at a time, a new tier opens right away.
 //   errors        – validation errors to show (see validateTiers in settings.js), empty when there are none
 //   focusRequest  – { tierId, key, focusField }: open that tier and scroll to it (and put the cursor
 //                   in its Minimum purchase amount field), a new key repeats the request
 export function RewardBarCard({ settings, onChange, errors = [], focusRequest }) {
   const { enabled, tiers } = settings;
+  // A dismissed banner stays dismissed for this viewer (not a setting – it isn't saved with the page).
+  const [bannerDismissed, setBannerDismissed] = usePersistentState('reward-bar-tiers:rewards-banner-dismissed', false);
   const [openTierId, setOpenTierId] = useState(tiers[0]?.id);
   const [addedTierId, setAddedTierId] = useState(null);
   const [scrollTarget, setScrollTarget] = useState(null); // { id, focusField }
@@ -194,21 +209,30 @@ export function RewardBarCard({ settings, onChange, errors = [], focusRequest })
   const deleteTier = (id) => setTiers(tiers.filter((tier) => tier.id !== id));
 
   return (
-    // Two sections split by a full-width divider, so the card has no padding of its own.
+    // Sections split by full-width dividers, so the card has no padding of its own.
     <Card padding="0">
       <Box padding="400">
         <BlockStack gap="400">
-          <InlineStack align="space-between" blockAlign="start">
-            <InlineStack gap="200" blockAlign="center">
-              <Text as="h2" variant="headingSm">
-                Reward bar
-              </Text>
-              {enabled ? <Badge tone="success">On</Badge> : <Badge>Off</Badge>}
+          <BlockStack gap="300">
+            <InlineStack align="space-between" blockAlign="start">
+              <InlineStack gap="200" blockAlign="center">
+                <Text as="h2" variant="headingSm">
+                  Rewards bar
+                </Text>
+                {enabled ? <Badge tone="success">On</Badge> : <Badge>Off</Badge>}
+              </InlineStack>
+              <Button onClick={() => onChange({ ...settings, enabled: !enabled })}>
+                {enabled ? 'Turn off' : 'Turn on'}
+              </Button>
             </InlineStack>
-            <Button onClick={() => onChange({ ...settings, enabled: !enabled })}>
-              {enabled ? 'Turn off' : 'Turn on'}
-            </Button>
-          </InlineStack>
+            {!bannerDismissed && (
+              <Banner tone="info" onDismiss={() => setBannerDismissed(true)}>
+                Rewards are applied using Shopify discounts or shipping rates.{' '}
+                {/* The help article doesn't exist yet – the link does nothing. */}
+                <Link>Learn more</Link>
+              </Banner>
+            )}
+          </BlockStack>
 
           {tiers.map((tier, index) => (
             <Tier
@@ -235,6 +259,13 @@ export function RewardBarCard({ settings, onChange, errors = [], focusRequest })
       <Divider />
       <Box padding="400">
         <MarketsSection settings={settings} onChange={onChange} />
+      </Box>
+      <Divider />
+      <Box padding="400">
+        <AppearanceSection
+          appearance={settings.appearance}
+          onChange={(appearance) => onChange({ ...settings, appearance })}
+        />
       </Box>
     </Card>
   );

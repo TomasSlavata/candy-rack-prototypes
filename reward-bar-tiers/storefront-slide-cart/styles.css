@@ -1,0 +1,123 @@
+/* The demo store around the slide cart. The cart itself is styled by shared/storefront/SlideCart.css. */
+
+.store-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--sf-space-4) var(--sf-space-6);
+  border-bottom: var(--sf-space-px) solid var(--sf-color-border);
+}
+
+.store-products {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--sf-space-6);
+  padding: var(--sf-space-6);
+}
+
+.store-product {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sf-space-3);
+  font-size: var(--sf-font-size-md);
+  line-height: var(--sf-line-height-md);
+}
+
+.store-product__image {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: var(--sf-radius);
+  object-fit: contain;
+}
+
+.store-product__title {
+  font-weight: var(--sf-font-weight-semibold);
+}
+
+.muted {
+  color: var(--sf-color-text-muted);
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--sf-color-overlay);
+}
+
+.slide-cart {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+}
+
+/* Opening and closing (Figma "9.1 Opening Animation", "9.2 Closing Animation"): the cart slides in from
+   the right edge while the overlay fades in, and back out. Each state sets the transition of the move
+   into it, so opening and closing have their own duration and curve. Closed, both stay rendered but
+   hidden (visibility switches after the move, so the cart can't be tabbed into). */
+.overlay,
+.slide-cart {
+  visibility: hidden;
+  transition:
+    opacity var(--sf-duration-close) var(--sf-easing-close),
+    transform var(--sf-duration-close) var(--sf-easing-close),
+    visibility 0s var(--sf-duration-close);
+}
+
+.overlay {
+  opacity: 0;
+}
+
+.slide-cart {
+  transform: translateX(100%);
+}
+
+.overlay.is-open,
+.slide-cart.is-open {
+  visibility: visible;
+  transition:
+    opacity var(--sf-duration-open) var(--sf-easing-open),
+    transform var(--sf-duration-open) var(--sf-easing-open),
+    visibility 0s;
+}
+
+.overlay.is-open {
+  opacity: 1;
+}
+
+.slide-cart.is-open {
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .overlay,
+  .slide-cart,
+  .overlay.is-open,
+  .slide-cart.is-open {
+    transition: none;
+  }
+}
+
+/* Full width below a 696px viewport, 480px from it.
+   Media queries can't use CSS variables, so the breakpoint is written out here. */
+@media (min-width: 696px) {
+  .slide-cart {
+    width: var(--sf-slide-cart-width);
+  }
+}
+
+.link-button {
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+}
+
+.secondary-button {
+  padding: var(--sf-space-2) var(--sf-space-4);
+  border: var(--sf-space-px) solid var(--sf-color-primary);
+  border-radius: var(--sf-radius-pill);
+  background: var(--sf-color-bg);
+  color: var(--sf-color-primary);
+}

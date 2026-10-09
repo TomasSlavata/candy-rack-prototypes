@@ -1,0 +1,21 @@
+/* CUSTOM: color swatch – see ColorField.jsx. Polaris tokens only, the color itself is the setting's value
+   (--cr-swatch-color). Same size, border and radius as the Polaris TextField next to it. */
+.cr-ColorSwatch {
+  flex-shrink: 0;
+  width: var(--p-space-800);
+  height: var(--p-space-800);
+  padding: 0;
+  border: var(--p-border-width-0165) solid var(--p-color-input-border);
+  border-radius: var(--p-border-radius-200);
+  background: var(--cr-swatch-color);
+  cursor: pointer;
+}
+
+.cr-ColorSwatch:hover {
+  border-color: var(--p-color-input-border-hover);
+}
+
+.cr-ColorSwatch:focus-visible {
+  outline: var(--p-border-width-050) solid var(--p-color-border-focus);
+  outline-offset: var(--p-space-025);
+}

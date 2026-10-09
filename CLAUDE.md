@@ -21,7 +21,8 @@ reward-bar/                  feature
   storefront-slide-cart/
 shared/
   admin/AdminShell.jsx       Polaris setup – admin and theme-editor parts start with renderAdmin()
-  storefront/                StorefrontShell.jsx + storefront.css (--sf-… tokens)
+  storefront/                StorefrontShell.jsx + storefront.css, tokens.css (--sf-… tokens),
+                             SlideCart.jsx (slide cart for storefront parts and admin previews)
   usePersistentState.js      saving to localStorage; useFeatureSettings() shares settings between a feature's parts
 _template/                   sample feature – a new prototype = copy this folder
 ```
@@ -85,7 +86,8 @@ If a custom solution is approved:
 ## Storefront (`storefront-…`)
 
 - No Polaris – we imitate what the customer sees in the store.
-- Styles only via `--sf-…` tokens from `shared/storefront/storefront.css`, no hard-coded values.
+- Styles only via `--sf-…` tokens from `shared/storefront/tokens.css`, no hard-coded values.
+- Admin previews of the storefront reuse the same storefront components (e.g. `SlideCart`), so they look the same.
 - A part's styles go to `styles.css` in the part's folder.
 
 ## Git workflow
