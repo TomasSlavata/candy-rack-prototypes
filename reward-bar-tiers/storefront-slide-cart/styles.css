@@ -115,9 +115,42 @@
 }
 
 .secondary-button {
+  position: relative;
   padding: var(--sf-space-2) var(--sf-space-4);
   border: var(--sf-space-px) solid var(--sf-color-primary);
   border-radius: var(--sf-radius-pill);
   background: var(--sf-color-bg);
   color: var(--sf-color-primary);
+}
+
+/* Loading (adding to the cart): a spinning icon in place of the label, the button can't be used. */
+.secondary-button__spinner {
+  position: absolute;
+  inset: 0;
+  width: var(--sf-icon-size);
+  height: var(--sf-icon-size);
+  margin: auto;
+  background-color: var(--sf-color-icon);
+  mask: var(--spinner-icon) center / contain no-repeat;
+  visibility: hidden;
+}
+
+.secondary-button--loading {
+  cursor: default;
+  pointer-events: none;
+}
+
+.secondary-button--loading .secondary-button__label {
+  visibility: hidden;
+}
+
+.secondary-button--loading .secondary-button__spinner {
+  visibility: visible;
+  animation: store-spin var(--sf-duration-spin) linear infinite;
+}
+
+@keyframes store-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }

@@ -20,7 +20,7 @@ const FULL_BAR_MS = 500;
 const MAX_TOTAL_MS = 900;
 const MIN_BAR_MS = 120;
 
-function useSequentialProgress(tiers) {
+function useSequentialProgress(tiers, startDelay) {
   const last = useRef({ progress: {}, motion: {} });
   const progress = Object.fromEntries(tiers.map((entry) => [entry.tier.id, entry.progress]));
   // Same values as the last change (e.g. a re-render for another reason) – keep that change's timing.
@@ -34,7 +34,7 @@ function useSequentialProgress(tiers) {
   const scale = Math.min(1, MAX_TOTAL_MS / durations.reduce((sum, ms) => sum + ms, 0));
 
   const motion = {};
-  let delay = 0;
+  let delay = startDelay; // e.g. waiting for the cart to open
   moving.forEach((entry, index) => {
     const duration = durations[index] * scale;
     const first = index === 0;
@@ -119,11 +119,13 @@ function playMessageSwitch(messageArea, outgoing) {
 // shared by the storefront part and the admin preview. Nothing shows when no tier has a valid amount.
 //   settings   – the feature settings (tiers, markets, appearance)
 //   cartTotal  – the cart's total, in the market currency
+//   delay      – ms to wait before the bars start moving after the next change of the cart total, e.g. while
+//                the cart opens after a product was added (everything after it – the message – waits too)
 // The colors and font sizes are the merchant's settings, so they come in as CSS variables
 // instead of storefront tokens.
-export function RewardsBar({ settings, cartTotal, market = STORE_MARKET }) {
+export function RewardsBar({ settings, cartTotal, market = STORE_MARKET, delay = 0 }) {
   const state = rewardsBarState(settings, cartTotal, market);
-  const motion = useSequentialProgress(state?.tiers ?? []);
+  const motion = useSequentialProgress(state?.tiers ?? [], delay);
   const { unlocks, losses } = useUnlockChanges(state?.tiers ?? [], cartTotal, motion);
   const root = useRef(null);
 
