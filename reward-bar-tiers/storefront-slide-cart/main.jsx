@@ -6,7 +6,7 @@ import herschelBackpack from '../../shared/storefront/images/herschel-backpack.p
 import acgCanwellGlacier from '../../shared/storefront/images/acg-canwell-glacier.webp';
 import nikeZoomFly from '../../shared/storefront/images/nike-zoom-fly.png';
 import { CURRENCY, DEFAULT_SETTINGS } from '../settings.js';
-import { RewardsBar } from '../RewardsBar.jsx';
+import { RewardsBar, UNLOCK_EFFECTS } from '../RewardsBar.jsx';
 import './styles.css';
 
 // Products of the demo store (Figma storefront designs). The cart starts with two of them.
@@ -19,6 +19,19 @@ const INITIAL_CART = [
   { ...PRODUCTS[1], quantity: 1 },
   { ...PRODUCTS[2], quantity: 1 },
 ];
+
+// WORK IN PROGRESS: the rewards bar once per unlock effect, stacked, to compare them (no design yet).
+// Not sticky – the stack would cover the products.
+function UnlockEffectsComparison({ settings, cartTotal }) {
+  return Object.entries(UNLOCK_EFFECTS).map(([effect, { label }], index) => (
+    <div key={effect}>
+      <p className="effect-caption">
+        {String.fromCharCode(65 + index)} · {label}
+      </p>
+      <RewardsBar settings={settings} cartTotal={cartTotal} unlockEffect={effect} />
+    </div>
+  ));
+}
 
 // Shows the saved settings – changes made in the admin part show up here after Save.
 // The cart lives only in this page (a reload starts over).
@@ -73,8 +86,7 @@ function Storefront() {
           fullHeight
           items={cart}
           currency={CURRENCY}
-          top={settings.enabled && <RewardsBar settings={settings} cartTotal={total} />}
-          stickyTop={settings.appearance.sticky}
+          top={settings.enabled && <UnlockEffectsComparison settings={settings} cartTotal={total} />}
           onQuantityChange={setQuantity}
           onRemove={remove}
           onClose={() => setCartOpen(false)}
