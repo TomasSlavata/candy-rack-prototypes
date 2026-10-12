@@ -78,27 +78,8 @@
   color: color-mix(in srgb, var(--rewards-bar-text) 70%, transparent);
 }
 
-/* ——— Unlock effects (WORK IN PROGRESS) – see UNLOCK_EFFECTS in RewardsBar.jsx ——— */
-
-.RewardsBar__track {
-  position: relative;
-}
-
-/* Shine: a light band that sweeps across the bar once. */
-.RewardsBar__shine {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--sf-color-bg) 70%, transparent), transparent);
-  transform: translateX(-100%);
-}
-
-/* Glow: the halo's color, read by the animation in RewardsBar.jsx. */
-.RewardsBar__track {
-  --rewards-bar-glow: color-mix(in srgb, var(--rewards-bar-progress) 45%, transparent);
-}
-
-/* Message switching: the area clips the texts sliding in and out (ticker); the old text is a copy laid
-   over the new one while it slides out. */
+/* Message switching (unlocked or lost reward, see RewardsBar.jsx): the area clips the texts sliding in
+   and out; the old text is a copy laid over the new one while it slides out. */
 .RewardsBar__message {
   position: relative;
   overflow: hidden;
