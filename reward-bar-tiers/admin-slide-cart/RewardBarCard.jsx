@@ -26,8 +26,10 @@ import {
   REWARD_TITLE_MAX_LENGTH,
   REWARD_TYPES,
   TEXT_MAX_LENGTH,
+  defaultRewardTitle,
   formatAmount,
   parseAmount,
+  rewardTitleOf,
 } from '../settings.js';
 import { AppearanceSection } from './AppearanceSection.jsx';
 import { BoxHeader, IconButtonSlot, TierBadge, toAmountInput } from './common.jsx';
@@ -128,7 +130,19 @@ function Tier({ tier, number, open, error, canDelete, onToggle, onOpened, onChan
             />
             <RichTextField label="Text before reward" value={reward.textBefore} maxLength={TEXT_MAX_LENGTH} variables />
             <RichTextField label="Text after reward" value={reward.textAfter} maxLength={TEXT_MAX_LENGTH} />
-            <RichTextField label="Reward title" value={reward.rewardTitle} maxLength={REWARD_TITLE_MAX_LENGTH} />
+            {/* The only text that can be edited in the prototype. Left blank (or set back to the default),
+                the tier uses its reward type's default title again. */}
+            <RichTextField
+              label="Reward title"
+              value={rewardTitleOf(tier)}
+              maxLength={REWARD_TITLE_MAX_LENGTH}
+              bold
+              onChange={(rewardTitle) => onChange({ rewardTitle })}
+              onBlur={() => {
+                const title = rewardTitleOf(tier).trim();
+                onChange({ rewardTitle: title === '' || title === defaultRewardTitle(tier) ? undefined : title });
+              }}
+            />
           </BlockStack>
         </Box>
       </Collapsible>

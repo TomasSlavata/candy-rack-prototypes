@@ -2,7 +2,8 @@
 // Admin parts edit and save them, storefront parts display them.
 
 // Reward types a tier can unlock. Texts mark bold parts with **…** (see shared/custom/RichTextField.jsx).
-// The texts can't be edited yet, so every tier of a type uses the type's default texts (Figma annotations).
+// Only the reward title can be edited yet (see rewardTitleOf), the other texts are the type's defaults
+// (Figma annotations).
 // The gift product and the discount value can't be set yet – these placeholders stand in for them.
 export const REWARD_TYPES = {
   freeShipping: {
@@ -32,6 +33,11 @@ export const REWARD_TYPES = {
 // Max lengths of the texts (Figma annotations).
 export const TEXT_MAX_LENGTH = 70;
 export const REWARD_TITLE_MAX_LENGTH = 30;
+
+// A tier's reward title: the one the merchant typed (tier.rewardTitle, plain text), or its reward type's
+// default. A tier without its own title follows its reward type when that changes.
+export const defaultRewardTitle = (tier) => REWARD_TYPES[tier.rewardType].rewardTitle.replaceAll('**', '');
+export const rewardTitleOf = (tier) => tier.rewardTitle ?? defaultRewardTitle(tier);
 
 export const CURRENCY = 'USD';
 

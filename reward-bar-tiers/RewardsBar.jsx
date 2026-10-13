@@ -1,6 +1,6 @@
 import { Fragment, useLayoutEffect, useRef, useState } from 'react';
 import { formatMoney } from '../shared/storefront/SlideCart.jsx';
-import { REWARD_TYPES, STORE_MARKET, rewardsBarState } from './settings.js';
+import { REWARD_TYPES, STORE_MARKET, rewardTitleOf, rewardsBarState } from './settings.js';
 import './RewardsBar.css';
 
 // "You're **{{amount}}** away from **free shipping**" → text with the bold parts in <strong>.
@@ -246,7 +246,7 @@ export function RewardsBar({ settings, cartTotal, market = STORE_MARKET, delay =
             {showLabels && (
               <div className="RewardsBar__label">
                 <p className={`RewardsBar__title${isAhead(index) ? ' RewardsBar__title--ahead' : ''}`}>
-                  {REWARD_TYPES[tier.rewardType].rewardTitle.replaceAll('**', '')}
+                  {rewardTitleOf(tier)}
                 </p>
                 {showAmount && <p className="RewardsBar__amount">{money(amount)}</p>}
               </div>
