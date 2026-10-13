@@ -85,16 +85,29 @@ function useUnlockChanges(tiers, cartTotal, motion) {
 }
 
 // The switch animation. `outgoing` is a copy of the old message, laid over the new one while it slides
-// out. Nothing moves for people who prefer reduced motion – the message just changes.
-function playMessageSwitch(messageArea, outgoing) {
+// out; `fromHeight` is the message area's height before the switch. When the new message has another
+// number of lines, the area's height follows smoothly, so the bar and the cart below don't jump.
+// Nothing moves for people who prefer reduced motion – the message just changes.
+function playMessageSwitch(messageArea, outgoing, fromHeight) {
   const message = messageArea?.querySelector('.RewardsBar__text');
   if (!message || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   // A copy left from a switch that hasn't finished yet goes now.
   messageArea.querySelectorAll('.RewardsBar__text--outgoing').forEach((copy) => copy.remove());
 
+  // A height animation from an unfinished switch stops, so the new message's own height can be measured.
+  messageArea.getAnimations().forEach((animation) => animation.cancel());
+  const toHeight = messageArea.getBoundingClientRect().height;
+  if (fromHeight && Math.abs(fromHeight - toHeight) > 0.5) {
+    messageArea.animate([{ height: `${fromHeight}px` }, { height: `${toHeight}px` }], MESSAGE_SWITCH);
+  }
+
+  // The new message starts right under the old one (by the old one's height, not its own), and both move
+  // by that height with the same timing – so they stay one under the other, never over each other, even
+  // when one has more lines than the other.
+  const from = fromHeight ? `${fromHeight}px` : '100%';
   message.animate(
     [
-      { transform: 'translateY(100%)', opacity: 0 },
+      { transform: `translateY(${from})`, opacity: 0 },
       { transform: 'none', opacity: 1 },
     ],
     MESSAGE_SWITCH,
@@ -107,7 +120,7 @@ function playMessageSwitch(messageArea, outgoing) {
       .animate(
         [
           { transform: 'none', opacity: 1 },
-          { transform: 'translateY(-100%)', opacity: 0 },
+          { transform: `translateY(-${from})`, opacity: 0 },
         ],
         { ...MESSAGE_SWITCH, fill: 'forwards' },
       )
@@ -135,7 +148,7 @@ export function RewardsBar({ settings, cartTotal, market = STORE_MARKET, delay =
   const lastMessage = useRef(message);
   const [messageOverride, setMessageOverride] = useState(null);
   const [messageSwitch, setMessageSwitch] = useState(0);
-  const outgoingMessage = useRef(null);
+  const outgoingMessage = useRef(null); // { copy, height } of the message before a switch
   const messageTimers = useRef([]);
   const clearMessageTimers = () => messageTimers.current.forEach(clearTimeout);
   useLayoutEffect(() => clearMessageTimers, []);
@@ -147,7 +160,12 @@ export function RewardsBar({ settings, cartTotal, market = STORE_MARKET, delay =
     clearMessageTimers();
     setMessageOverride((override) => override ?? lastMessage.current);
     const switchTo = (override) => {
-      outgoingMessage.current = root.current?.querySelector('.RewardsBar__text')?.cloneNode(true) ?? null;
+      const area = root.current?.querySelector('.RewardsBar__message');
+      outgoingMessage.current = area && {
+        copy: area.querySelector('.RewardsBar__text').cloneNode(true),
+        // Mid-switch the area may still be animating – its current height is where it starts from.
+        height: area.getBoundingClientRect().height,
+      };
       setMessageOverride(override);
       setMessageSwitch((count) => count + 1);
     };
@@ -179,7 +197,11 @@ export function RewardsBar({ settings, cartTotal, market = STORE_MARKET, delay =
 
   useLayoutEffect(() => {
     if (messageSwitch === 0) return;
-    playMessageSwitch(root.current?.querySelector('.RewardsBar__message'), outgoingMessage.current);
+    playMessageSwitch(
+      root.current?.querySelector('.RewardsBar__message'),
+      outgoingMessage.current?.copy,
+      outgoingMessage.current?.height,
+    );
     outgoingMessage.current = null;
   }, [messageSwitch]);
 
