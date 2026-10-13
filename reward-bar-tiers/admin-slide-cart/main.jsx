@@ -16,6 +16,7 @@ import {
   Popover,
   Text,
   Toast,
+  useBreakpoints,
 } from '@shopify/polaris';
 import { MenuIcon } from '@shopify/polaris-icons';
 import { renderAdmin } from '../../shared/admin/AdminShell.jsx';
@@ -23,7 +24,10 @@ import { AdminTopBar, SaveBar } from '../../shared/custom/SaveBar.jsx';
 import { useMediaQuery } from '../../shared/custom/useMediaQuery.js';
 import { useFeatureSettings } from '../../shared/usePersistentState.js';
 import appIcon from '../../shared/admin/candy-rack-icon.png';
-import { DEFAULT_SETTINGS, sortTiersByAmount, validateTiers } from '../settings.js';
+import dayCream from '../../shared/storefront/images/day-cream.png';
+import { SlideCart } from '../../shared/storefront/SlideCart.jsx';
+import { CURRENCY, DEFAULT_SETTINGS, sortTiersByAmount, validateTiers } from '../settings.js';
+import { RewardsBar } from '../RewardsBar.jsx';
 import { RewardBarCard } from './RewardBarCard.jsx';
 
 // Page layout from Figma "4.0 Responsive Layout":
@@ -38,9 +42,11 @@ const WIDE_COLUMNS = '240px minmax(0, 1fr) 390px';
 const TWO_COLUMNS = 'minmax(0, 1fr) 390px';
 const APP_MAX_WIDTH = '1404px';
 
-// Heights of the empty placeholder cards, taken from Figma – replaced by real content later.
+// Height of the empty navigation card, taken from Figma – replaced by real content later.
 const NAV_CARD_HEIGHT = '576px';
-const PREVIEW_CARD_HEIGHT = '600px';
+
+// The sample cart in the preview (Figma). Its quantity can be changed to see the tiers unlock.
+const PREVIEW_CART = [{ id: 'day-cream', title: 'Day Cream', variant: '160 ml', price: 14.99, quantity: 1, image: dayCream }];
 
 // APP BRIDGE: title bar – the app name row the Shopify admin shows above the app.
 function AppHeader() {
@@ -84,6 +90,41 @@ function SectionsMenu() {
       {/* Empty for now – the sections come later. */}
       <Box minWidth="194px" minHeight="200px" />
     </Popover>
+  );
+}
+
+// CUSTOM: keeps the preview in view while the settings scroll – 16px under the admin top bar.
+// Polaris Box can be sticky, but its offset only takes space tokens, not the top bar height + 16px.
+// Only next to the settings (1040+); in one column the preview would cover them.
+const PREVIEW_STICKY_STYLE = {
+  position: 'sticky',
+  top: 'calc(var(--pg-top-bar-height) + var(--p-space-400))',
+};
+
+// Preview of the slide cart with the edited settings, before they're saved – the same slide cart and
+// rewards bar the storefront part shows. Line item offers and embedded block offers are left out.
+function SlideCartPreview({ settings }) {
+  const { lgUp } = useBreakpoints();
+  const [items, setItems] = useState(PREVIEW_CART);
+  const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+  return (
+    <div style={lgUp ? PREVIEW_STICKY_STYLE : undefined}>
+      <Card padding="0">
+        {/* The delete and close buttons do nothing – the preview always shows its sample cart. */}
+        <SlideCart
+          items={items}
+          currency={CURRENCY}
+          top={settings.enabled && <RewardsBar settings={settings} cartTotal={total} />}
+          stickyTop={settings.appearance.sticky}
+          totalLabel="Estimated total"
+          showDiscount
+          onQuantityChange={(id, quantity) =>
+            setItems((current) => current.map((item) => (item.id === id ? { ...item, quantity } : item)))
+          }
+        />
+      </Card>
+    </div>
   );
 }
 
@@ -201,9 +242,7 @@ function SlideCartSettings() {
                     focusRequest={focusRequest}
                   />
 
-                  <Card padding="0">
-                    <Box minHeight={PREVIEW_CARD_HEIGHT} />
-                  </Card>
+                  <SlideCartPreview settings={settings} />
                 </InlineGrid>
               </BlockStack>
             </Box>

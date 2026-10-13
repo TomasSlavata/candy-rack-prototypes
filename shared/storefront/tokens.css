@@ -1,0 +1,79 @@
+/* Storefront design tokens – use these variables instead of hard-coded values.
+   Values from the Candy Rack storefront design system (Figma "CR – Slide Cart", Design System page).
+   Only variables here, so admin parts can import it too (e.g. a slide cart preview) without
+   the storefront page styles in storefront.css. */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400..700&display=swap');
+
+:root {
+  --sf-font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+  /* Colors */
+  --sf-color-bg: #ffffff;
+  --sf-color-bg-muted: #f8f8f8;
+  --sf-color-text: #282a2c;
+  --sf-color-text-muted: rgba(40, 42, 44, 0.7);
+  --sf-color-text-disabled: rgba(40, 42, 44, 0.4);
+  --sf-color-icon: rgba(40, 42, 44, 0.7);
+  --sf-color-icon-hover: #282a2c; /* also active */
+  --sf-color-icon-disabled: rgba(40, 42, 44, 0.2);
+  --sf-color-border: rgba(40, 42, 44, 0.13);
+  --sf-color-input-border: rgba(40, 42, 44, 0.4);
+  --sf-color-input-border-active: #282a2c;
+  --sf-color-stepper-hover: rgba(40, 42, 44, 0.05);
+  --sf-color-stepper-active: rgba(40, 42, 44, 0.13);
+  --sf-color-primary: #282a2c;
+  --sf-color-primary-hover: #4a4e52; /* also active */
+  --sf-color-primary-disabled: rgba(74, 78, 82, 0.3);
+  --sf-color-on-primary: #ffffff;
+  --sf-color-overlay: rgba(0, 0, 0, 0.4);
+
+  /* Corner radius */
+  --sf-radius: 8px; /* thumbnails */
+  --sf-radius-pill: 99999px; /* buttons, text inputs, badges, dividers, progress bars */
+
+  /* Spacing */
+  --sf-space-px: 1px;
+  --sf-space-0-5: 2px;
+  --sf-space-1: 4px;
+  --sf-space-1-5: 6px;
+  --sf-space-2: 8px;
+  --sf-space-3: 12px;
+  --sf-space-4: 16px;
+  --sf-space-5: 20px;
+  --sf-space-6: 24px;
+  --sf-space-8: 32px;
+  --sf-space-10: 40px;
+  --sf-space-22: 88px;
+
+  /* Typography: size / line height */
+  --sf-font-size-sm: 12px;
+  --sf-line-height-sm: 18px;
+  --sf-font-size-md: 14px;
+  --sf-line-height-md: 20px;
+  --sf-font-size-lg: 16px;
+  --sf-line-height-lg: 22px;
+  --sf-font-size-xl: 20px;
+  --sf-line-height-xl: 26px;
+  --sf-font-weight-regular: 400;
+  --sf-font-weight-semibold: 600;
+
+  /* Motion */
+  /* Slide cart opening and closing (Figma "9.1 Opening Animation", "9.2 Closing Animation") */
+  --sf-duration-open: 260ms;
+  --sf-easing-open: cubic-bezier(0, 0, 0.3, 1);
+  --sf-duration-close: 220ms;
+  --sf-easing-close: ease-in;
+  /* Component state changes (hover, active, disabled…) */
+  --sf-duration-state: 150ms;
+  --sf-easing-state: ease;
+  --sf-duration-spin: 1s; /* one turn of a spinner */
+
+  /* Opacity */
+  --sf-opacity-removing: 0.4; /* a product card while it's being removed */
+
+  /* Sizes */
+  --sf-icon-size: 20px;
+  --sf-thumbnail-size: 96px;
+  --sf-stepper-button-size: 38px;
+  --sf-slide-cart-width: 480px; /* from a 696px wide viewport, below it the cart is full width */
+}

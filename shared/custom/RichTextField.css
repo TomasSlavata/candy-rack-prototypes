@@ -1,0 +1,31 @@
+/* CUSTOM: see RichTextField.jsx. Polaris tokens only. */
+
+/* The focus ring of a Polaris text field, around the whole field while its text is edited. */
+.cr-RichTextField {
+  border-radius: var(--p-border-radius-200);
+}
+
+.cr-RichTextField:focus-within {
+  outline: var(--p-border-width-050) solid var(--p-color-border-focus);
+  outline-offset: var(--p-space-025);
+}
+
+/* The editable text – looks like the read-only text (Polaris Text bodyMd). */
+.cr-RichTextField__input {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--p-color-text);
+  font-family: var(--p-font-family-sans);
+  font-size: var(--p-text-body-md-font-size);
+  font-weight: var(--p-text-body-md-font-weight);
+  line-height: var(--p-text-body-md-font-line-height);
+  outline: none;
+}
+
+.cr-RichTextField__input--bold {
+  font-weight: var(--p-font-weight-semibold);
+}

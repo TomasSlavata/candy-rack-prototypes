@@ -1,0 +1,98 @@
+/* Rewards bar – see RewardsBar.jsx. Storefront tokens, plus the merchant's colors and font sizes
+   (--rewards-bar-…, set on the element from the Appearance settings). */
+
+.RewardsBar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sf-space-3);
+  padding: var(--sf-space-4) var(--sf-space-5) var(--sf-space-5);
+  background: var(--rewards-bar-bg);
+  color: var(--rewards-bar-text);
+  text-align: center;
+}
+
+/* With labels under the bar the bottom padding is smaller (Figma). */
+.RewardsBar--labels {
+  padding-bottom: var(--sf-space-4);
+}
+
+.RewardsBar p {
+  margin: 0;
+  overflow-wrap: break-word;
+}
+
+/* Line height = font size + 6px, like the design's 14/20 and 12/18. */
+.RewardsBar__text {
+  font-size: var(--rewards-bar-text-size);
+  line-height: calc(var(--rewards-bar-text-size) + var(--sf-space-1-5));
+}
+
+.RewardsBar__text strong {
+  font-weight: var(--sf-font-weight-semibold);
+}
+
+.RewardsBar__tiers {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sf-space-1);
+}
+
+/* Tiers share the width equally, whatever their amounts. */
+.RewardsBar__tier {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  gap: var(--sf-space-2);
+  min-width: 0;
+}
+
+.RewardsBar__track {
+  height: var(--sf-space-2);
+  overflow: hidden;
+  border-radius: var(--sf-radius-pill);
+  background: var(--rewards-bar-track);
+}
+
+.RewardsBar__progress {
+  height: 100%;
+  border-radius: var(--sf-radius-pill);
+  background: var(--rewards-bar-progress);
+  /* Timing per bar from RewardsBar.jsx (useSequentialProgress), so the bars move one after another. */
+  transition: width var(--rewards-bar-duration, 0ms) var(--rewards-bar-easing, ease) var(--rewards-bar-delay, 0ms);
+}
+
+.RewardsBar__label {
+  padding: 0 var(--sf-space-1-5);
+  font-size: var(--rewards-bar-label-size);
+  line-height: calc(var(--rewards-bar-label-size) + var(--sf-space-1-5));
+}
+
+.RewardsBar__title {
+  font-weight: var(--sf-font-weight-semibold);
+  transition: color var(--sf-duration-state) var(--sf-easing-state);
+}
+
+/* Not unlocked and not the next one either – the same shade as the amounts. */
+.RewardsBar__title--ahead,
+.RewardsBar__amount {
+  color: color-mix(in srgb, var(--rewards-bar-text) 70%, transparent);
+}
+
+/* Message switching (unlocked or lost reward, see RewardsBar.jsx): the area clips the texts sliding in
+   and out; the old text is a copy laid over the new one while it slides out. */
+.RewardsBar__message {
+  position: relative;
+  overflow: hidden;
+}
+
+.RewardsBar__text--outgoing {
+  position: absolute;
+  inset: 0 0 auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .RewardsBar__progress,
+  .RewardsBar__title {
+    transition: none;
+  }
+}

@@ -1,0 +1,410 @@
+/* Slide cart – see SlideCart.jsx. Storefront tokens only (tokens.css). */
+
+.sf-SlideCart {
+  display: flex;
+  flex-direction: column;
+  min-height: 600px;
+  background: var(--sf-color-bg);
+  color: var(--sf-color-text);
+  font-family: var(--sf-font);
+  font-size: var(--sf-font-size-md);
+  line-height: var(--sf-line-height-md);
+  text-align: start;
+}
+
+.sf-SlideCart *,
+.sf-SlideCart *::before,
+.sf-SlideCart *::after {
+  box-sizing: border-box;
+}
+
+.sf-SlideCart p,
+.sf-SlideCart h2 {
+  margin: 0;
+}
+
+.sf-SlideCart button {
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+/* Fills the drawer, the body scrolls between the header and the footer. */
+.sf-SlideCart--fullHeight {
+  height: 100%;
+  min-height: 0;
+}
+
+.sf-SlideCart--fullHeight .sf-SlideCart__body {
+  overflow-y: auto;
+}
+
+/* ——— Header ——— */
+
+.sf-SlideCart__header {
+  display: flex;
+  align-items: center;
+  gap: var(--sf-space-4);
+  padding: var(--sf-space-5);
+  border-bottom: var(--sf-space-px) solid var(--sf-color-border);
+}
+
+.sf-SlideCart__title {
+  flex: 1;
+  font-size: var(--sf-font-size-xl);
+  line-height: var(--sf-line-height-xl);
+  font-weight: var(--sf-font-weight-semibold);
+}
+
+/* Icons are masks filled with the text color of their button, so states can recolor them. */
+.sf-Icon {
+  display: block;
+  flex-shrink: 0;
+  width: var(--sf-icon-size);
+  height: var(--sf-icon-size);
+  background-color: currentColor;
+  mask: var(--sf-icon-source) center / contain no-repeat;
+}
+
+/* Focus: the browser's default focus ring (design system note), so no focus styles here. */
+
+/* Icon button (Figma "Icon Button"): a 20px icon with a bigger click area that doesn't take up space
+   (6px around it). Hover and active darken the icon. */
+.sf-SlideCart .sf-SlideCart__iconButton {
+  display: flex;
+  flex-shrink: 0;
+  margin: calc(-1 * var(--sf-space-1-5));
+  padding: var(--sf-space-1-5);
+  color: var(--sf-color-icon);
+}
+
+.sf-SlideCart .sf-SlideCart__iconButton:hover,
+.sf-SlideCart .sf-SlideCart__iconButton:active {
+  color: var(--sf-color-icon-hover);
+}
+
+.sf-SlideCart .sf-SlideCart__iconButton:disabled {
+  color: var(--sf-color-icon-disabled);
+  cursor: default;
+}
+
+/* ——— Body ——— */
+
+.sf-SlideCart__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.sf-SlideCart__top--sticky {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.sf-SlideCart__products {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sf-space-5);
+  padding: var(--sf-space-5);
+}
+
+.sf-SlideCart__product {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sf-space-5);
+}
+
+.sf-SlideCart__divider {
+  width: 100%;
+  height: var(--sf-space-px);
+  margin: 0;
+  border: none;
+  border-radius: var(--sf-radius-pill);
+  background: var(--sf-color-border);
+}
+
+/* ——— Empty cart ——— */
+
+/* Only the close button, at the same height as the header with a title, without the line under it. */
+.sf-SlideCart__header--empty {
+  justify-content: flex-end;
+  min-height: calc(var(--sf-line-height-xl) + 2 * var(--sf-space-5));
+  border-bottom: none;
+}
+
+/* Centered a bit above the middle (88px under it, Figma). */
+.sf-SlideCart__emptyState {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sf-space-8);
+  padding: 0 var(--sf-space-10) var(--sf-space-22);
+  text-align: center;
+}
+
+/* The title takes the free space only in the header. */
+.sf-SlideCart__emptyState .sf-SlideCart__title {
+  flex: none;
+}
+
+/* ——— Product card ——— */
+
+.sf-ProductCard {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sf-space-4);
+}
+
+.sf-ProductCard__thumbnail {
+  flex-shrink: 0;
+  width: var(--sf-thumbnail-size);
+  height: var(--sf-thumbnail-size);
+  border-radius: var(--sf-radius);
+  object-fit: contain;
+}
+
+.sf-ProductCard__content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--sf-space-4);
+  min-width: 0;
+}
+
+.sf-ProductCard__heading {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sf-space-5);
+}
+
+.sf-ProductCard__name {
+  flex: 1;
+  min-width: 0;
+}
+
+.sf-ProductCard__title,
+.sf-ProductCard__variant {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sf-ProductCard__title {
+  font-weight: var(--sf-font-weight-semibold);
+}
+
+.sf-ProductCard__variant {
+  color: var(--sf-color-text-muted);
+}
+
+.sf-ProductCard__bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sf-ProductCard__price {
+  white-space: nowrap;
+}
+
+/* While its new quantity is being applied, the old price waits greyed out (like the total). */
+.sf-ProductCard__price--updating {
+  color: var(--sf-color-text-disabled);
+}
+
+/* Removing (Figma "13.2 Removing Product"): everything but the spinning delete button at 40%,
+   and nothing in the card can be used any more. */
+.sf-ProductCard--removing {
+  pointer-events: none;
+}
+
+.sf-ProductCard--removing .sf-ProductCard__thumbnail,
+.sf-ProductCard--removing .sf-ProductCard__name,
+.sf-ProductCard--removing .sf-ProductCard__bottom {
+  opacity: var(--sf-opacity-removing);
+}
+
+/* Icon button "Loading" state: the spinner in the icon color, turning. */
+.sf-SlideCart .sf-SlideCart__iconButton--loading {
+  color: var(--sf-color-icon);
+}
+
+.sf-SlideCart__iconButton--loading .sf-Icon {
+  animation: sf-spin var(--sf-duration-spin) linear infinite;
+}
+
+@keyframes sf-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ——— Quantity stepper (Figma "Quantity Stepper") ——— */
+
+.sf-QuantityStepper {
+  display: flex;
+  align-items: center;
+  padding: var(--sf-space-px);
+  border: var(--sf-space-px) solid var(--sf-color-input-border);
+  border-radius: var(--sf-radius-pill);
+  background: var(--sf-color-bg);
+}
+
+/* Typing the quantity (Active): a 2px dark border – the padding gives up 1px, so the size stays. */
+.sf-QuantityStepper:has(.sf-QuantityStepper__value:focus) {
+  padding: 0;
+  border-width: var(--sf-space-0-5);
+  border-color: var(--sf-color-input-border-active);
+}
+
+.sf-QuantityStepper__button,
+.sf-QuantityStepper__value {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--sf-stepper-button-size);
+  height: var(--sf-stepper-button-size);
+}
+
+/* − and +: hover and active fill the button and darken the icon, disabled lightens the icon. */
+.sf-SlideCart .sf-QuantityStepper__button {
+  padding: 0;
+  border-radius: var(--sf-radius-pill);
+  color: var(--sf-color-icon);
+}
+
+.sf-SlideCart .sf-QuantityStepper__button:hover {
+  background: var(--sf-color-stepper-hover);
+  color: var(--sf-color-icon-hover);
+}
+
+.sf-SlideCart .sf-QuantityStepper__button:active {
+  background: var(--sf-color-stepper-active);
+  color: var(--sf-color-icon-hover);
+}
+
+.sf-SlideCart .sf-QuantityStepper__button:disabled {
+  background: none;
+  color: var(--sf-color-icon-disabled);
+  cursor: default;
+}
+
+/* The minus is drawn in the button's color (the plus is an icon). */
+.sf-QuantityStepper__minus {
+  width: calc(var(--sf-icon-size) / 2);
+  height: 1.5px;
+  border-radius: var(--sf-space-px);
+  background: currentColor;
+}
+
+/* The quantity can be typed (I-beam cursor on hover). Its focus shows on the whole stepper. */
+.sf-QuantityStepper__value {
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--sf-color-text);
+  font: inherit;
+  text-align: center;
+  outline: none;
+}
+
+/* ——— Footer ——— */
+
+.sf-SlideCart__footer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sf-space-3);
+  padding: var(--sf-space-5);
+  border-top: var(--sf-space-px) solid var(--sf-color-border);
+}
+
+.sf-SlideCart__discount {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sf-space-4);
+}
+
+.sf-SlideCart__discount .sf-Icon {
+  color: var(--sf-color-icon);
+}
+
+.sf-SlideCart__total {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--sf-font-size-lg);
+  line-height: var(--sf-line-height-lg);
+  font-weight: var(--sf-font-weight-semibold);
+}
+
+/* While a product is being removed, the total waits for its new value. */
+.sf-SlideCart__totalValue--updating {
+  color: var(--sf-color-text-disabled);
+}
+
+/* 16px between the total and the button (12px gap + 4px). */
+.sf-SlideCart__checkout {
+  margin-top: var(--sf-space-1);
+}
+
+/* ——— Primary large button (Figma "Primary Large Button") ——— */
+
+.sf-SlideCart .sf-PrimaryButton {
+  padding: var(--sf-space-3) var(--sf-space-5);
+  border-radius: var(--sf-radius-pill);
+  background: var(--sf-color-primary);
+  color: var(--sf-color-on-primary);
+  font-size: var(--sf-font-size-lg);
+  line-height: var(--sf-line-height-lg);
+  font-weight: var(--sf-font-weight-semibold);
+}
+
+.sf-SlideCart .sf-PrimaryButton:hover,
+.sf-SlideCart .sf-PrimaryButton:active {
+  background: var(--sf-color-primary-hover);
+}
+
+.sf-SlideCart .sf-PrimaryButton:disabled {
+  background: var(--sf-color-primary-disabled);
+  cursor: default;
+}
+
+/* ——— State changes ———
+   Moving between states (default ↔ hover, active, disabled, focus, removing) is animated, not instant. */
+
+.sf-SlideCart .sf-SlideCart__iconButton,
+.sf-SlideCart .sf-QuantityStepper__button,
+.sf-SlideCart .sf-PrimaryButton {
+  transition:
+    background-color var(--sf-duration-state) var(--sf-easing-state),
+    color var(--sf-duration-state) var(--sf-easing-state);
+}
+
+.sf-QuantityStepper {
+  transition: border-color var(--sf-duration-state) var(--sf-easing-state);
+}
+
+.sf-ProductCard__thumbnail,
+.sf-ProductCard__name,
+.sf-ProductCard__bottom {
+  transition: opacity var(--sf-duration-state) var(--sf-easing-state);
+}
+
+.sf-SlideCart__total span,
+.sf-ProductCard__price {
+  transition: color var(--sf-duration-state) var(--sf-easing-state);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sf-SlideCart *,
+  .sf-SlideCart .sf-SlideCart__iconButton,
+  .sf-SlideCart .sf-QuantityStepper__button,
+  .sf-SlideCart .sf-PrimaryButton {
+    transition: none;
+  }
+}

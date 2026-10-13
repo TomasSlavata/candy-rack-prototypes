@@ -2,6 +2,8 @@
 // Admin parts edit and save them, storefront parts display them.
 
 // Reward types a tier can unlock. Texts mark bold parts with **…** (see shared/custom/RichTextField.jsx).
+// Only the reward title can be edited yet (see rewardTitleOf), the other texts are the type's defaults
+// (Figma annotations).
 // The gift product and the discount value can't be set yet – these placeholders stand in for them.
 export const REWARD_TYPES = {
   freeShipping: {
@@ -9,6 +11,7 @@ export const REWARD_TYPES = {
     summary: 'Free shipping',
     textBefore: "You're **{{amount}}** away from **free shipping**",
     textAfter: "You've got **free shipping**",
+    rewardTitle: '**Free shipping**',
   },
   freeGift: {
     label: 'Free gift',
@@ -16,14 +19,25 @@ export const REWARD_TYPES = {
     giftProduct: 'Herschel Classic Backpack',
     textBefore: "You're **{{amount}}** away from a **free gift**",
     textAfter: "You've got a **free gift**",
+    rewardTitle: '**Free gift**',
   },
   orderDiscount: {
     label: 'Order discount',
     summary: 'Order discount',
-    textBefore: "You're **{{amount}}** away from **10% off** your order",
-    textAfter: "You've got **10% off** your order",
+    textBefore: "You're **{{amount}}** away from a **discount**",
+    textAfter: "You've got a **discount**",
+    rewardTitle: '**Discount**',
   },
 };
+
+// Max lengths of the texts (Figma annotations).
+export const TEXT_MAX_LENGTH = 70;
+export const REWARD_TITLE_MAX_LENGTH = 30;
+
+// A tier's reward title: the one the merchant typed (tier.rewardTitle, plain text), or its reward type's
+// default. A tier without its own title follows its reward type when that changes.
+export const defaultRewardTitle = (tier) => REWARD_TYPES[tier.rewardType].rewardTitle.replaceAll('**', '');
+export const rewardTitleOf = (tier) => tier.rewardTitle ?? defaultRewardTitle(tier);
 
 export const CURRENCY = 'USD';
 
@@ -47,6 +61,20 @@ export const DEFAULT_SETTINGS = {
   tiers: [{ id: 'tier-1', rewardType: 'freeShipping', minimumAmount: '50.00' }],
   // Markets the merchant adjusted, by market id – see "Markets" below.
   markets: {},
+  // How the bar looks in the slide cart – see "Appearance" below.
+  appearance: {
+    showRewardTitle: true,
+    showAmount: false,
+    hideWhenOneTier: true,
+    textFontSize: 14,
+    rewardTitleFontSize: 12,
+    // Hex codes without "#", as the color fields show them.
+    backgroundColor: 'F8F8F8',
+    textColor: '282A2C',
+    progressColor: '282A2C',
+    barColor: 'DCDCDC',
+    sticky: true,
+  },
 };
 
 // Tiers ordered from the lowest minimum purchase amount up – applied when the settings are saved,
@@ -166,4 +194,42 @@ export function validateMarket(market, tiers, changes) {
     }
   }
   return errors;
+}
+
+// ——— Appearance ———
+// Both font sizes (Figma annotations).
+export const FONT_SIZE = { min: 10, max: 20, step: 1 };
+
+// ——— Storefront ———
+// The market the storefront and the admin preview show – the store's own (USD), so they use the tiers'
+// amounts as they are, without hidden tiers or amounts set for that market.
+export const STORE_MARKET = MARKETS.find((market) => market.id === 'us');
+
+// What the rewards bar shows for a cart total:
+//   tiers    – shown tiers from the lowest amount up: { tier, amount, progress (0–1 of its own part of the bar) }
+//   text     – the next tier's "Text before reward" with {{amount}} = what's left to spend,
+//              or the last tier's "Text after reward" once every tier is unlocked
+//   missing  – what's left to spend for the next tier (null once all are unlocked)
+// Tiers without a valid amount are left out (they can't be saved anyway). Null when no tier is left.
+export function rewardsBarState(settings, cartTotal, market = STORE_MARKET) {
+  const tiers = marketTiers(market, settings.tiers, settings.markets?.[market.id])
+    .filter((entry) => !entry.hidden && parseAmount(entry.amount) !== null)
+    .map((entry) => ({ tier: entry.tier, amount: parseAmount(entry.amount) }));
+  if (tiers.length === 0) return null;
+
+  // Each tier fills its part of the bar from the previous tier's amount up to its own.
+  const withProgress = tiers.map((entry, index) => {
+    const from = index === 0 ? 0 : tiers[index - 1].amount;
+    const span = entry.amount - from;
+    const progress = span > 0 ? (cartTotal - from) / span : cartTotal >= entry.amount ? 1 : 0;
+    return { ...entry, progress: Math.min(1, Math.max(0, progress)) };
+  });
+
+  const next = tiers.find((entry) => cartTotal < entry.amount);
+  const reward = (entry) => REWARD_TYPES[entry.tier.rewardType];
+  return {
+    tiers: withProgress,
+    text: next ? reward(next).textBefore : reward(tiers.at(-1)).textAfter,
+    missing: next ? next.amount - cartTotal : null,
+  };
 }
