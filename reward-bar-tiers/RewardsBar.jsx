@@ -11,48 +11,91 @@ function RichText({ value, amount }) {
     .map((part, index) => (index % 2 === 1 ? <strong key={index}>{part}</strong> : <Fragment key={index}>{part}</Fragment>));
 }
 
-// How the tiers' bars move when the cart total changes: one after another, like a single bar filling up
-// (or emptying, right to left) across the tier gaps – not all at once.
-// Each bar takes time for the part of it that changes (a whole bar: FULL_BAR_MS), all of them together
-// at most MAX_TOTAL_MS. The first moving bar speeds up, the last one slows down, the ones between keep
-// a steady speed, so it reads as one movement.
+// How the tiers' bars move when the cart total changes: as one bar across all tiers. The position on it
+// (0 = empty, 1 = the first tier's bar full, 2 = the second's…) animates as a single value with one curve,
+// and each tier's bar shows its part – so the bars fill one after another (or empty right to left) in one
+// continuous movement. Duration: FULL_BAR_MS per bar moved (at least MIN_MS, at most MAX_MS).
 const FULL_BAR_MS = 500;
-const MAX_TOTAL_MS = 900;
-const MIN_BAR_MS = 120;
+const MIN_MS = 120;
+const MAX_MS = 900;
 
-function useSequentialProgress(tiers, startDelay) {
-  const last = useRef({ progress: {}, motion: {} });
-  const progress = Object.fromEntries(tiers.map((entry) => [entry.tier.id, entry.progress]));
-  // Same values as the last change (e.g. a re-render for another reason) – keep that change's timing.
-  if (JSON.stringify(progress) === JSON.stringify(last.current.progress)) return last.current.motion;
+// CSS ease-in-out (cubic-bezier(0.42, 0, 0.58, 1)): the share of the way done at a share of the time.
+const BEZIER = [0.42, 0, 0.58, 1];
+const bezier = (a, b, t) => 3 * a * t * (1 - t) ** 2 + 3 * b * t ** 2 * (1 - t) + t ** 3;
+function easeInOut(time) {
+  let low = 0, high = 1, t = time;
+  for (let i = 0; i < 30; i += 1) {
+    t = (low + high) / 2;
+    if (bezier(BEZIER[0], BEZIER[2], t) < time) low = t;
+    else high = t;
+  }
+  return bezier(BEZIER[1], BEZIER[3], t);
+}
+// The other way round: the share of the time at which a share of the way is done.
+function timeAt(share) {
+  let low = 0, high = 1;
+  for (let i = 0; i < 30; i += 1) {
+    const mid = (low + high) / 2;
+    if (easeInOut(mid) < share) low = mid;
+    else high = mid;
+  }
+  return (low + high) / 2;
+}
 
-  const before = last.current.progress;
-  const filling = tiers.some((entry) => entry.progress > (before[entry.tier.id] ?? entry.progress));
-  const ordered = filling ? tiers : [...tiers].reverse();
-  const moving = ordered.filter((entry) => before[entry.tier.id] !== undefined && before[entry.tier.id] !== entry.progress);
-  const durations = moving.map((entry) => Math.max(MIN_BAR_MS, Math.abs(entry.progress - before[entry.tier.id]) * FULL_BAR_MS));
-  const scale = Math.min(1, MAX_TOTAL_MS / durations.reduce((sum, ms) => sum + ms, 0));
+const positionOf = (tiers) => tiers.reduce((sum, entry) => sum + entry.progress, 0);
+const prefersReducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  const motion = {};
-  let delay = startDelay; // e.g. waiting for the cart to open
-  moving.forEach((entry, index) => {
-    const duration = durations[index] * scale;
-    const first = index === 0;
-    const lastBar = index === moving.length - 1;
-    motion[entry.tier.id] = {
-      style: {
-        '--rewards-bar-duration': `${duration}ms`,
-        '--rewards-bar-delay': `${delay}ms`,
-        '--rewards-bar-easing': first && lastBar ? 'ease-in-out' : first ? 'ease-in' : lastBar ? 'ease-out' : 'linear',
-      },
-      start: delay, // when this bar starts moving, in ms
-      end: delay + duration, // when it has finished
+// Animates the position and returns it (to draw the bars), plus `motion`: for each tier whose bar moves,
+// when it starts and ends moving (ms from the change) – the unlock and loss effects are timed by it.
+// `startDelay` – ms to wait before moving (e.g. while the cart opens).
+function useProgressAnimation(tiers, startDelay) {
+  const target = positionOf(tiers);
+  const ids = tiers.map((entry) => entry.tier.id).join();
+  const [shown, setShown] = useState(target);
+  const shownRef = useRef(target);
+  const plan = useRef({ target, ids, motion: {}, from: target, duration: 0, delay: 0, key: 0 });
+
+  // A new target: plan the movement from where the bars are now (also mid-way through a movement).
+  if (target !== plan.current.target || ids !== plan.current.ids) {
+    const from = ids === plan.current.ids ? shownRef.current : target; // other tiers: no movement
+    const distance = Math.abs(target - from);
+    const duration = distance === 0 ? 0 : Math.min(MAX_MS, Math.max(MIN_MS, distance * FULL_BAR_MS));
+    const crossing = (boundary) => startDelay + duration * timeAt(Math.abs(boundary - from) / distance);
+    const motion = {};
+    tiers.forEach((entry, index) => {
+      // This bar covers the positions index … index + 1.
+      const low = Math.max(index, Math.min(from, target));
+      const high = Math.min(index + 1, Math.max(from, target));
+      if (distance === 0 || high <= low) return;
+      const [start, end] = target > from ? [crossing(low), crossing(high)] : [crossing(high), crossing(low)];
+      motion[entry.tier.id] = { start, end };
+    });
+    plan.current = { target, ids, motion, from, duration, delay: startDelay, key: plan.current.key + 1 };
+  }
+
+  useLayoutEffect(() => {
+    const { from, duration, delay } = plan.current;
+    const to = plan.current.target;
+    const show = (position) => {
+      shownRef.current = position;
+      setShown(position);
     };
-    delay += duration;
-  });
+    if (duration === 0 || prefersReducedMotion()) {
+      show(to);
+      return undefined;
+    }
+    const begin = performance.now() + delay;
+    let frame;
+    const step = (now) => {
+      const share = Math.min(1, Math.max(0, (now - begin) / duration));
+      show(from + (to - from) * easeInOut(share));
+      if (share < 1) frame = requestAnimationFrame(step);
+    };
+    frame = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(frame);
+  }, [plan.current.key]);
 
-  last.current = { progress, motion };
-  return motion;
+  return { position: shown, motion: plan.current.motion };
 }
 
 // ——— Message when a reward is unlocked or lost ———
@@ -90,7 +133,7 @@ function useUnlockChanges(tiers, cartTotal, motion) {
 // Nothing moves for people who prefer reduced motion – the message just changes.
 function playMessageSwitch(messageArea, outgoing, fromHeight) {
   const message = messageArea?.querySelector('.RewardsBar__text');
-  if (!message || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  if (!message || prefersReducedMotion()) return;
   // A copy left from a switch that hasn't finished yet goes now.
   messageArea.querySelectorAll('.RewardsBar__text--outgoing').forEach((copy) => copy.remove());
 
@@ -138,7 +181,7 @@ function playMessageSwitch(messageArea, outgoing, fromHeight) {
 // instead of storefront tokens.
 export function RewardsBar({ settings, cartTotal, market = STORE_MARKET, delay = 0 }) {
   const state = rewardsBarState(settings, cartTotal, market);
-  const motion = useSequentialProgress(state?.tiers ?? [], delay);
+  const { position, motion } = useProgressAnimation(state?.tiers ?? [], delay);
   const { unlocks, losses } = useUnlockChanges(state?.tiers ?? [], cartTotal, motion);
   const root = useRef(null);
 
@@ -241,7 +284,10 @@ export function RewardsBar({ settings, cartTotal, market = STORE_MARKET, delay =
               aria-label={REWARD_TYPES[tier.rewardType].label}
               aria-valuenow={Math.round(progress * 100)}
             >
-              <div className="RewardsBar__progress" style={{ width: `${progress * 100}%`, ...motion[tier.id]?.style }} />
+              <div
+                className="RewardsBar__progress"
+                style={{ width: `${Math.min(1, Math.max(0, position - index)) * 100}%` }}
+              />
             </div>
             {showLabels && (
               <div className="RewardsBar__label">
