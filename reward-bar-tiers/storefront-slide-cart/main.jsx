@@ -39,6 +39,11 @@ function Storefront() {
   const [barDelay, setBarDelay] = useState(0);
   const cartOpen = useRef(isCartOpen);
   cartOpen.current = isCartOpen;
+  // An add that opened the cart (the only change with a delay): the rewards bar shows an unlocked reward's
+  // "Text after reward" right away (RewardsBar `textFirst`).
+  const addOpenedCart = barDelay > 0;
+  // Once the cart has been emptied, the rewards bar that comes back with the next product animates from $0.
+  const [cartWasEmptied, setCartWasEmptied] = useState(false);
 
   const count = cart.reduce((sum, item) => sum + item.quantity, 0);
   const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
@@ -48,10 +53,11 @@ function Storefront() {
     if (addingIds.includes(product.id)) return;
     setAddingIds((current) => [...current, product.id]);
     setTimeout(() => {
+      // A new product goes first, as in Shopify carts; more of one already in the cart keeps its place.
       setCart((current) =>
         current.some((item) => item.id === product.id)
           ? current.map((item) => (item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item))
-          : [...current, { ...product, quantity: 1 }],
+          : [{ ...product, quantity: 1 }, ...current],
       );
       setAddingIds((current) => current.filter((id) => id !== product.id));
       setBarDelay(cartOpen.current ? 0 : openingDuration());
@@ -64,7 +70,11 @@ function Storefront() {
   };
   const remove = (id) => {
     setBarDelay(0);
-    setCart((current) => current.filter((item) => item.id !== id));
+    setCart((current) => {
+      const next = current.filter((item) => item.id !== id);
+      if (next.length === 0) setCartWasEmptied(true);
+      return next;
+    });
   };
 
   return (
@@ -105,7 +115,17 @@ function Storefront() {
           fullHeight
           items={cart}
           currency={CURRENCY}
-          top={settings.enabled && <RewardsBar settings={settings} cartTotal={total} delay={barDelay} />}
+          top={
+            settings.enabled && (
+              <RewardsBar
+                settings={settings}
+                cartTotal={total}
+                delay={barDelay}
+                fromEmpty={cartWasEmptied}
+                textFirst={addOpenedCart}
+              />
+            )
+          }
           stickyTop={settings.appearance.sticky}
           onQuantityChange={setQuantity}
           onRemove={remove}

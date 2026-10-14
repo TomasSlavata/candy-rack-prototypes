@@ -48,12 +48,14 @@ const prefersReducedMotion = () => window.matchMedia('(prefers-reduced-motion: r
 // Animates the position and returns it (to draw the bars), plus `motion`: for each tier whose bar moves,
 // when it starts and ends moving (ms from the change) – the unlock and loss effects are timed by it.
 // `startDelay` – ms to wait before moving (e.g. while the cart opens).
-function useProgressAnimation(tiers, startDelay) {
+// `fromEmpty` – when it's first shown, the bars start empty and move to the cart total.
+function useProgressAnimation(tiers, startDelay, fromEmpty) {
   const target = positionOf(tiers);
   const ids = tiers.map((entry) => entry.tier.id).join();
-  const [shown, setShown] = useState(target);
-  const shownRef = useRef(target);
-  const plan = useRef({ target, ids, motion: {}, from: target, duration: 0, delay: 0, key: 0 });
+  const initial = fromEmpty ? 0 : target;
+  const [shown, setShown] = useState(initial);
+  const shownRef = useRef(initial);
+  const plan = useRef({ target: initial, ids, motion: {}, from: initial, duration: 0, delay: 0, key: 0 });
 
   // A new target: plan the movement from where the bars are now (also mid-way through a movement).
   if (target !== plan.current.target || ids !== plan.current.ids) {
@@ -109,8 +111,9 @@ const MESSAGE_SWITCH = { duration: 450, easing: 'ease-in-out' };
 
 // Tiers unlocked by the last change of the cart total (with when their bar has filled up), and tiers
 // lost by it (with when their bar starts to empty – that's when the reward is gone).
-function useUnlockChanges(tiers, cartTotal, motion) {
-  const last = useRef({ unlocked: null, changes: { unlocks: [], losses: [] } });
+// `fromEmpty` – when it's first shown, nothing counts as unlocked before (the cart was empty).
+function useUnlockChanges(tiers, cartTotal, motion, fromEmpty) {
+  const last = useRef({ unlocked: fromEmpty ? [] : null, changes: { unlocks: [], losses: [] } });
   const unlocked = tiers.filter((entry) => cartTotal >= entry.amount).map((entry) => entry.tier.id);
   if (last.current.unlocked !== null && JSON.stringify(unlocked) === JSON.stringify(last.current.unlocked)) {
     return last.current.changes;
@@ -177,18 +180,25 @@ function playMessageSwitch(messageArea, outgoing, fromHeight) {
 //   cartTotal  – the cart's total, in the market currency
 //   delay      – ms to wait before the bars start moving after the next change of the cart total, e.g. while
 //                the cart opens after a product was added (everything after it – the message – waits too)
+//   fromEmpty  – it appears because the first product was added to an empty cart: it starts from an empty
+//                cart (bars empty) and animates to the cart total like any other change. Read only when it
+//                appears.
+//   textFirst  – for the next change – a product added from the store, which opens the cart: if it unlocks a
+//                reward, the message shows its "Text after reward" right away, while the bars still move, and
+//                moves on AFTER_TEXT_MS after the bar is full. (Changes made in the open cart wait for the bar.)
 // The colors and font sizes are the merchant's settings, so they come in as CSS variables
 // instead of storefront tokens.
-export function RewardsBar({ settings, cartTotal, market = STORE_MARKET, delay = 0 }) {
+export function RewardsBar({ settings, cartTotal, market = STORE_MARKET, delay = 0, fromEmpty = false, textFirst = false }) {
   const state = rewardsBarState(settings, cartTotal, market);
-  const { position, motion } = useProgressAnimation(state?.tiers ?? [], delay);
-  const { unlocks, losses } = useUnlockChanges(state?.tiers ?? [], cartTotal, motion);
+  const { position, motion } = useProgressAnimation(state?.tiers ?? [], delay, fromEmpty);
+  const { unlocks, losses } = useUnlockChanges(state?.tiers ?? [], cartTotal, motion, fromEmpty);
   const root = useRef(null);
 
   // The message shown: the one for the cart total, or – around an unlock or a loss – one held back
   // or the unlocked tier's "Text after reward" (see "Message when a reward is unlocked or lost").
   const message = state && { value: state.text, missing: state.missing };
-  const lastMessage = useRef(message);
+  const emptyState = fromEmpty ? rewardsBarState(settings, 0, market) : null;
+  const lastMessage = useRef(emptyState ? { value: emptyState.text, missing: emptyState.missing } : message);
   const [messageOverride, setMessageOverride] = useState(null);
   const [messageSwitch, setMessageSwitch] = useState(0);
   const outgoingMessage = useRef(null); // { copy, height } of the message before a switch
@@ -196,37 +206,47 @@ export function RewardsBar({ settings, cartTotal, market = STORE_MARKET, delay =
   const clearMessageTimers = () => messageTimers.current.forEach(clearTimeout);
   useLayoutEffect(() => clearMessageTimers, []);
 
+  const switchTo = (override) => {
+    const area = root.current?.querySelector('.RewardsBar__message');
+    outgoingMessage.current = area && {
+      copy: area.querySelector('.RewardsBar__text').cloneNode(true),
+      // Mid-switch the area may still be animating – its current height is where it starts from.
+      height: area.getBoundingClientRect().height,
+    };
+    setMessageOverride(override);
+    setMessageSwitch((count) => count + 1);
+  };
+  // Moves on from a "Text after reward" – only if the message for the cart total is a different one
+  // (not after the last tier).
+  const moveOnFrom = (afterText) => {
+    if (lastMessage.current.value === afterText.value) setMessageOverride(null);
+    else switchTo(null);
+  };
+
   // Before paint, so a message held back never shows its new text for a frame.
   useLayoutEffect(() => {
     if (unlocks.length === 0 && losses.length === 0) return;
-    // Keeps what's shown now (also a message still overridden from an earlier change) until the switch.
     clearMessageTimers();
-    setMessageOverride((override) => override ?? lastMessage.current);
-    const switchTo = (override) => {
-      const area = root.current?.querySelector('.RewardsBar__message');
-      outgoingMessage.current = area && {
-        copy: area.querySelector('.RewardsBar__text').cloneNode(true),
-        // Mid-switch the area may still be animating – its current height is where it starts from.
-        height: area.getBoundingClientRect().height,
-      };
-      setMessageOverride(override);
-      setMessageSwitch((count) => count + 1);
-    };
 
     if (unlocks.length > 0) {
       // Several tiers unlocked at once: the highest one's text.
       const at = Math.max(...unlocks.map((unlock) => unlock.at));
       const unlocked = state.tiers.find((entry) => entry.tier.id === unlocks.at(-1).id);
       const afterText = { value: REWARD_TYPES[unlocked.tier.rewardType].textAfter, missing: null };
+      if (textFirst) {
+        // Right away and without the switch animation – the cart is still opening.
+        setMessageOverride(afterText);
+        messageTimers.current = [setTimeout(() => moveOnFrom(afterText), at + AFTER_TEXT_MS)];
+        return;
+      }
+      // Keeps what's shown now (also a message still overridden from an earlier change) until the switch.
+      setMessageOverride((override) => override ?? lastMessage.current);
       messageTimers.current = [
         setTimeout(() => switchTo(afterText), at),
-        // Moves on only if the message for the cart total is a different one (not after the last tier).
-        setTimeout(() => {
-          if (lastMessage.current.value === afterText.value) setMessageOverride(null);
-          else switchTo(null);
-        }, at + AFTER_TEXT_MS),
+        setTimeout(() => moveOnFrom(afterText), at + AFTER_TEXT_MS),
       ];
     } else {
+      setMessageOverride((override) => override ?? lastMessage.current);
       // Several tiers lost at once: when the last of their bars starts to empty.
       messageTimers.current = [setTimeout(() => switchTo(null), Math.max(...losses.map((loss) => loss.at)))];
     }
