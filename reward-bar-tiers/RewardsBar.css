@@ -57,8 +57,7 @@
   height: 100%;
   border-radius: var(--sf-radius-pill);
   background: var(--rewards-bar-progress);
-  /* Timing per bar from RewardsBar.jsx (useSequentialProgress), so the bars move one after another. */
-  transition: width var(--rewards-bar-duration, 0ms) var(--rewards-bar-easing, ease) var(--rewards-bar-delay, 0ms);
+  /* Animated by RewardsBar.jsx (useProgressAnimation) – all bars as one. */
 }
 
 .RewardsBar__label {
@@ -91,7 +90,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .RewardsBar__progress,
   .RewardsBar__title {
     transition: none;
   }
