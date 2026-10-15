@@ -227,6 +227,10 @@ export function RewardsBar({ settings, cartTotal, market = STORE_MARKET, delay =
   useLayoutEffect(() => {
     if (unlocks.length === 0 && losses.length === 0) return;
     clearMessageTimers();
+    // Keeps what's shown now (also a message still overridden from an earlier change) until the switch.
+    // Read here, not later in the state update: by then lastMessage already holds the new message.
+    const shown = lastMessage.current;
+    const holdShown = () => setMessageOverride((override) => override ?? shown);
 
     if (unlocks.length > 0) {
       // Several tiers unlocked at once: the highest one's text.
@@ -239,14 +243,13 @@ export function RewardsBar({ settings, cartTotal, market = STORE_MARKET, delay =
         messageTimers.current = [setTimeout(() => moveOnFrom(afterText), at + AFTER_TEXT_MS)];
         return;
       }
-      // Keeps what's shown now (also a message still overridden from an earlier change) until the switch.
-      setMessageOverride((override) => override ?? lastMessage.current);
+      holdShown();
       messageTimers.current = [
         setTimeout(() => switchTo(afterText), at),
         setTimeout(() => moveOnFrom(afterText), at + AFTER_TEXT_MS),
       ];
     } else {
-      setMessageOverride((override) => override ?? lastMessage.current);
+      holdShown();
       // Several tiers lost at once: when the last of their bars starts to empty.
       messageTimers.current = [setTimeout(() => switchTo(null), Math.max(...losses.map((loss) => loss.at)))];
     }
